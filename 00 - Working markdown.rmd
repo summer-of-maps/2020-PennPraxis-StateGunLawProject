@@ -1,0 +1,20 @@
+---
+title: "SGLP Working Draft"
+author: "Eugene Chong"
+date: `r format(Sys.time(), '%B %d, %Y')`
+output: html_document
+---
+
+```{r setup, include=FALSE}
+cache_state = TRUE
+
+knitr::opts_chunk$set(echo = TRUE, cache = cache_state)
+```
+
+# Admin
+
+```{r admin}
+library(tidyverse)
+library(vroom)
+```
+
