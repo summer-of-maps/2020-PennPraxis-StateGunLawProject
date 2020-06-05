@@ -5,6 +5,8 @@ PennPraxis State Gun Law Project for Azavea Summer of Maps Fellowship 2020
 
 ## Data
 
+All SGLP-provided raw data are saved in the Dropbox.
+
 ## Code
 
 ### Markdowns
