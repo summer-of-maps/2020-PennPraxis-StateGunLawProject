@@ -31,8 +31,11 @@ library(furrr) # parallel processing
 
 # spatial data
 library(sf)
+library(tmap)
+library(tmaptools)
 
 # visualization
+library(ggmap)
 
 # debugging
 library(rbenchmark)

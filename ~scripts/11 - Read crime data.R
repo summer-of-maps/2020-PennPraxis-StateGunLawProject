@@ -11,10 +11,10 @@
 ##########################################################################
 
 ## 1-2. ----
-gun_crimes_df <- vroom(file.path(data_dir, "Full_City_Dataset/alldatahierarchies.csv"),
+guns_df <- vroom(file.path(data_dir, "Full_City_Dataset/alldatahierarchies.csv"),
                        col_select = -1) %>%  # don't import column 1
   filter(allgun == 1) 
 
 ## 1. Export as rds ----
-# saveRDS(gun_crimes_df,
-#         "~outputs/10/11_gun_crimes_df.rds")
+# saveRDS(guns_df,
+#         "~outputs/10/11_guns_df.rds")

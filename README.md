@@ -25,6 +25,6 @@ All SGLP-provided raw data are saved in the Dropbox.
 
 ### Outputs (incl. intermediate objects
 
-**Format:** /~outputs/[scriptRange]/[script#]_[objectName].rds
+**Format:** `/~outputs/[scriptRange]/[script#]_[objectName].rds`
 
 **Example:** `/~outputs/10/11_gun_crimes_df.rds` is object `gun_crimes_df` produced in script 11.

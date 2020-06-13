@@ -17,6 +17,7 @@ Load packages
 
 ```{r packages}
 source("~scripts/00 - Admin.R")
+source("~scripts/01 - Utility Functions.R")
 
 # unload packages
 # detach("package:microbenchmark", unload=TRUE)
@@ -30,19 +31,19 @@ source("~scripts/00 - Admin.R")
 source("~scripts/10 - Read Siegel Data.R")
 ```
 
-## Gun crimes for all cities
+## Gun incidents for all cities
 
 ```{r}
 # source("~scripts/11 - Read crime data.R")
-gun_crimes_df <- readRDS("~outputs/10/11_gun_crimes_df.rds")
+guns_df <- readRDS("~outputs/10/11_guns_df.rds")
 ```
 
 Sample of data for testing
 
 ```{r, eval = FALSE}
 set.seed(1)
-gun_crimes_sample_df <- sample_n(gun_crimes_df, 10000) 
-gun_crimes_sample_ls <- gun_crimes_sample_df %>% 
+guns_sample_df <- sample_n(guns_df, 10000) 
+guns_sample_ls <- guns_sample_df %>% 
   split(., # split into nested list of dfs by city
         f = .$city)
 ```
@@ -81,8 +82,8 @@ Number of Cities: 34
 Number of States: 29
 
 ```{r}
-unique(gun_crimes_df$city)
-unique(gun_crimes_df$state)
+unique(guns_df$city)
+unique(guns_df$state)
 ```
 
 **Date Range:**
@@ -92,7 +93,7 @@ unique(gun_crimes_df$state)
 
 ```{r, eval = FALSE}
 plan(multiprocess)
-gun_crimes_sample_ls <- future_map(gun_crimes_sample_ls,
+guns_sample_ls <- future_map(guns_sample_ls,
                         ~ .x %>% 
                           mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
          # correct some incorrectly parsed observations
@@ -114,19 +115,20 @@ gun_crimes_sample_ls <- future_map(gun_crimes_sample_ls,
 ```
 
 ```{r}
-# source("~scripts/11 - Read crime data.R")
-gun_crimes_clean <- readRDS("~outputs/20/21_gun_crimes_clean.rds")
+# source("~scripts/21 - Clean crime data.R")
+guns_clean <- readRDS("~outputs/20/21_guns_clean.rds")
+guns_list <- readRDS("~outputs/20/21_guns_list.rds")
 ```
 
 ```{r}
-range(gun_crimes_clean$clean_occur_date, na.rm = TRUE)
-range(gun_crimes_clean$clean_report_date, na.rm = TRUE)
+range(guns_clean$clean_occur_date, na.rm = TRUE)
+range(guns_clean$clean_report_date, na.rm = TRUE)
 ```
 
 Benchmarking results show `furrr` is fastest for manipulating the data.
 ```{r, eval = FALSE}
 benchmark_results <- benchmark("flat" = {
-  flat <- gun_crimes_sample_df %>% 
+  flat <- guns_sample_df %>% 
   mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
          # correct some incorrectly parsed observations
          clean_occur_date = case_when(occurdate == "1" ~ as.Date(NA),
@@ -142,7 +144,7 @@ benchmark_results <- benchmark("flat" = {
                                         as.Date(reportdate, "%m/%d/%y"),
                                       TRUE ~ clean_report_date))}, # benchmarking shows the furrr approach is fastest (but still not very fast)
 
-"purrr" = {map(gun_crimes_sample_ls,
+"purrr" = {map(guns_sample_ls,
                         ~ .x %>% 
                           mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
          # correct some incorrectly parsed observations
@@ -160,7 +162,7 @@ benchmark_results <- benchmark("flat" = {
                                       TRUE ~ clean_report_date)))},
 
 # plan(multiprocess)
-"furrr" = {future_map(gun_crimes_sample_ls,
+"furrr" = {future_map(guns_sample_ls,
                         ~ .x %>% 
                           mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
          # correct some incorrectly parsed observations
@@ -188,13 +190,29 @@ Source script:
 source("~scripts/31 - Explore crime data.R")
 ```
 
-Gun crime count by city
+Gun incident count by city
 
 ```{r}
-crime_count
+incident_count
 ```
 
 ```{r, fig.height=6}
-crimesByCityPlot
+incidentsByCityPlot
+```
+
+#### San Francisco
+
+How many NA observations?
+
+```{r}
+paste("There are",
+      sum(is.na(sf_incidents$lon_clean)), "NA longitudes and",
+      sum(is.na(sf_incidents$lat_clean)), "NA latitudes among",
+      nrow(sf_incidents), "total incidents in San Francisco.")
+```
+Map of all incidents with coordinates
+
+```{r, fig.height=6}
+sf_incident_map
 ```
 
