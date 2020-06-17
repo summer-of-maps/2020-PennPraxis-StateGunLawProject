@@ -1,8 +1,10 @@
 ##########################################################################
 # This script:
-# 1. Sets the file path for the synced Dropbox data folder
-# 2. Turns off scientific notation
-# 3. Loads packages
+# 1. Loads packages 
+# 2.
+#   (a) Sets the file path for the synced Dropbox data folder
+#   (b) Sets Census API key
+# 3. Turns off scientific notation
 # 4. Sets visualization aesthetics
 #
 # Exports:
@@ -12,33 +14,38 @@
 ##########################################################################
 
 ## 1. ----
-data_dir <- "C:/Users/echong/Dropbox/SGLP_Azavea"
-
-## 2. ----
-
-options(scipen=999)
-
-## 3. ----
-
-# os tools
-
 
 # Data reading and wrangling
 library(tidyverse)
-library(vroom)
-library(anytime)
+library(vroom) # read large csvs
+library(anytime) # datetime manipulation
 library(furrr) # parallel processing
+library(readxl)
+library(data.table)
 
 # spatial data
 library(sf)
-library(tmap)
-library(tmaptools)
+library(tmap) # thematic mapping
+library(tmaptools) # spatial utility functions
+
+# census
+library(tidycensus)
 
 # visualization
-library(ggmap)
+library(ggmap) # basemaps
 
 # debugging
-library(rbenchmark)
+library(rbenchmark) # time processing speed
+
+## 2. ----
+# (a)
+data_dir <- "C:/Users/echong/Dropbox/SGLP_Azavea"
+
+# (b)
+census_api_key("3ef31f05bc4961d45eaa1d3e4787a9b4be486b9f")
+
+## 3. ----
+options(scipen=999)
 
 ## 4. ----
 plotTheme <- function(){

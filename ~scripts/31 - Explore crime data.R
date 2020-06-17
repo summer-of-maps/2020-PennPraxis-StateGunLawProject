@@ -37,9 +37,30 @@ sf_basemap <- get_map(base_map_bb(sf_incidents_shp),
                       color = "bw")
 
 sf_incident_map <- ggmap(sf_basemap) +
+  geom_sf(data = sf_tracts_2018,
+          inherit.aes = FALSE) +
   geom_sf(data = sf_incidents_shp,
           color = "#d7301f",
           alpha = 0.3,
           inherit.aes = FALSE) +
   plotTheme()
-  
+
+## 3. all cities crime map ----
+guns_list_shp <- future_map(guns_list,
+                     ~ .x %>% 
+                       filter(!is.na(lon),
+                              !is.na(lat)) %>% 
+                       st_as_sf(coords = c("lon", "lat"),
+                                crs = 4326,
+                                remove = FALSE),
+                     .progress = TRUE)
+
+basemap_list <- map(guns_list_shp[1:2],
+                    ~ get_map(base_map_bb(.x),
+                              source = "stamen",
+                              maptype = "toner-background",
+                              color = "bw"))
+
+View(guns_list$Auburn)
+View(guns_df %>% 
+       filter(city == "Auburn"))
