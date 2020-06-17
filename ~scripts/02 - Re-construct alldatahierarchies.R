@@ -6,9 +6,10 @@
 #
 # Exports: 
 # 1. alldata_Azavea.csv
-# 2. alldatahierarchies_Azavea.csv
+# 2. 
 #
 # To-do:
+# 1. alldatahierarchies_Azavea.csv
 # 
 ##########################################################################
 
