@@ -1,15 +1,16 @@
 ##########################################################################
-# This script re-constructs alldatahierarchies.csv per 6/16 call with Ada by:
+# This script re-constructs alldata.csv abd alldatahierarchies.csv per 6/16 call with Ada by:
 # A. Reading in the cleaned city data and making clean-up changes as needed
 # B. Adding the weapons columns
-# C. Exports as csv
+# C. Adding city region column
+# D. Exporting as csv
 #
 # Exports: 
 # 1. alldata_Azavea.csv
-# 2. 
+# 2. alldatahierarchies_Azavea.csv
 #
 # To-do:
-# 1. alldatahierarchies_Azavea.csv
+# 1. add `size` column data
 # 
 ##########################################################################
 
@@ -971,7 +972,7 @@ alldata <- bind_rows(atl,
              tuc,
              va)
 
-#### B. Add weapons columns
+#### B. Add weapons columns ----
 adagun_desc <- c("GUN", "FIREARM", "WEAPON", "MURDER",
               "MANSLAUGHTER", "HANDGUN", "RIFLE", "SHOTGUN", 
               "SHOOTING", "SHOT", "HOMICIDE")
@@ -988,6 +989,52 @@ alldata <- alldata %>%
          weapgun = ifelse(str_detect(weapon, weapgun_desc), 1, 0),
          allgun = ifelse(adagun == 1 | weapgun == 1, 1, 0))
 
-#### C. Export as csv
+#### C. Add `region` and `size` columns ----
+west <- c("Auburn",
+          "Denver",
+          "Los Angeles",
+          "Phoenix",
+          "Portland",
+          "Sacramento County",
+          "Salt Lake City",
+          "San Francisco",
+          "Tucson")
+midwest <- c("Chicago",
+             "Cincinnati",
+             "Detroit",
+             "Indianapolis",
+             "Kansas City",
+             "Lincoln",
+             "Madison",
+             "Minneapolis",
+             "Saint Paul",
+             "St Louis County")
+south <- c("Atlanta",
+           "Baltimore",
+           "Baton Rouge",
+           "Columbia",
+           "Dallas",
+           "Gainesville",
+           "Little Rock",
+           "Louisville",
+           "Nashville",
+           "Raleigh",
+           "Virginia Beach")
+northeast <- c("Boston",
+               "Hartford",
+               "New York",
+               "Philadelphia")
+
+alldata_hierachy <- alldata %>% 
+  mutate(size = NA_character_,
+         region = as.factor(case_when(city %in% west ~ "West",
+                                      city %in% midwest ~ "Midwest",
+                                      city %in% south ~ "South",
+                                      city %in% northeast ~ "Northeast",
+                                      TRUE ~ NA_character_)))
+
+#### D. Export as csv ----
 # fwrite(alldata,
 #        file = file.path(data_dir, "Full_City_Dataset/alldata_Azavea.csv"))
+# fwrite(alldata_hierachy,
+#        file = file.path(data_dir, "Full_City_Dataset/alldata_hierachies_Azavea.csv"))
