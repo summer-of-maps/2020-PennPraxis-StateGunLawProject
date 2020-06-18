@@ -4,6 +4,8 @@
 # 2.
 #   (a) Sets the file path for the synced Dropbox data folder
 #   (b) Sets Census API key
+#   (c) Caches Census shapefiles
+#   (d) Sets Google API key
 # 3. Turns off scientific notation
 # 4. Sets visualization aesthetics
 #
@@ -31,8 +33,11 @@ library(tmaptools) # spatial utility functions
 # census
 library(tidycensus)
 
-# visualization
+# visualization and geocoding
 library(ggmap) # basemaps
+library(gridExtra)
+library(knitr)
+library(kableExtra)
 
 # debugging
 library(rbenchmark) # time processing speed
@@ -42,7 +47,15 @@ library(rbenchmark) # time processing speed
 data_dir <- "C:/Users/echong/Dropbox/SGLP_Azavea"
 
 # (b)
-census_api_key("3ef31f05bc4961d45eaa1d3e4787a9b4be486b9f")
+census_key <- readRDS("API_keys/census_api_key.rds")
+census_api_key(census_key, install = T, overwrite = TRUE)
+
+# (d)
+options(tigris_use_cache = TRUE)
+
+# (d)
+google_key <- readRDS("API_keys/google_key.rds")
+register_google(google_key)
 
 ## 3. ----
 options(scipen=999)

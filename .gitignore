@@ -38,3 +38,12 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# API keys
+/API_keys/
+
+# large files
+/~outputs/~large_files/
+
+# scratch files
+*/~scratch/

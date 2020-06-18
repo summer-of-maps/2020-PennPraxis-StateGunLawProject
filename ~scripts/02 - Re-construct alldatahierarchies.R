@@ -1,5 +1,5 @@
 ##########################################################################
-# This script re-constructs alldata.csv abd alldatahierarchies.csv per 6/16 call with Ada by:
+# This script re-constructs alldata.csv and alldatahierarchies.csv per 6/16 call with Ada by:
 # A. Reading in the cleaned city data and making clean-up changes as needed
 # B. Adding the weapons columns
 # C. Adding city region column
@@ -1037,4 +1037,4 @@ alldata_hierachy <- alldata %>%
 # fwrite(alldata,
 #        file = file.path(data_dir, "Full_City_Dataset/alldata_Azavea.csv"))
 # fwrite(alldata_hierachy,
-#        file = file.path(data_dir, "Full_City_Dataset/alldata_hierachies_Azavea.csv"))
+#        file = file.path(data_dir, "Full_City_Dataset/alldatahierarchies_Azavea.csv"))

@@ -1,19 +1,22 @@
 ##########################################################################
 # This script:
 # 1. Splits the gun crimes 
-# 2. Cleans the gun crime data by:
+# 2. Geocodes observations for Virginia Beach
+# 3. Cleans the gun crime data by:
 #   (a) parsing occurrence date and reported date 
 #   (b) documenting cleaning steps for every city
-#   (c) turns lon/lat columns into numeric
-# 3. Flattens the list into a dataframe
-# 4. Creates an sf version of the crime data in list form
+#       NB: For each city, I checked lon/lat ranges and clean_occur_date 
+#           and clean_report_date for sensible values for each
+# 4. Flattens the list into a dataframe
+# 5. Creates an sf version of the crime data in list form
 #
 # Exports: 
 # 1. guns_list as 21_guns_list.rds
 # 2. guns_clean as 21_guns_clean.rds
+# 3. guns_list_shp as 21_guns_list_shp.rds
 #
 # To-do:
-# 1. Baton Rouge
+# 1. 
 ##########################################################################
 
 ## 1. ----
@@ -21,8 +24,27 @@ guns_list <- split(guns_df,
                    f = guns_df$city)
 
 ## 2. ----
+# guns_list$`Virginia Beach` <- guns_list$`Virginia Beach` %>% 
+#   unite("tmp_address", loc, city, state, sep = ", ", remove = FALSE) %>% 
+#   dplyr::select(-c(lat, lon)) %>% 
+#   mutate_geocode(tmp_address,
+#                  output = "latlon",
+#                  source = "google") %>% 
+#   dplyr::select(all_of(names(guns_df)))
+# 
+# write_csv(guns_list$`Virginia Beach`,
+#           file.path(data_dir, 
+#                     "Individual_City_Dataset/VirginiaBeach_Virginia/clean_data/virginiabeach_firearm_16_20_geocoded.csv"))
+
+guns_list$`Virginia Beach` <- read_csv(file.path(data_dir, 
+                                                 "Individual_City_Dataset/VirginiaBeach_Virginia/clean_data/virginiabeach_firearm_16_20_geocoded.csv")) %>% 
+  mutate(incidentID = as.character(incidentID),
+         reportdate = as.character(reportdate),
+         occurdate = as.character(occurdate))
+
+## 3. ----
 plan(multiprocess)
-# 2(a) - this takes a while
+# 3(a) - this takes a while
 guns_list <- future_map(guns_list,
                         ~ .x %>% 
                           mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
@@ -44,191 +66,194 @@ guns_list <- future_map(guns_list,
                                                                TRUE ~ clean_report_date)),
                         .progress = TRUE)
 
-
-
-
-
-#!!!!! 2(b) - DO THIS AFTER FIXING ALL THE city-by-city data
-lon = as.numeric(lon),
-lat = as.numeric(lat)
-#!!!!!
-
-
-
-
-
-# 2(b)
+# 3(b)
 ### Atlanta - looks fine
 
-### Auburn - add lon and lat info from loc column with the below
-guns_list$Auburn <- guns_list$Auburn %>% 
-  mutate(lon = str_match(loc, "[:digit:], (.*?)\\)")[, 2],
-         lat = str_match(loc, "\\((.*?),")[, 2])
+### Auburn - looks fine
 
 ### Baltimore - looks fine
 
-### Baton Rouge
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$`Baton Rouge`)
-guns_df %>% 
-  filter(city == "Baton Rouge") %>% 
-  View()
+### Baton Rouge - looks fine
 
-### Boston - lon/lat columns contain both coords in format (123, 456)
+### Boston - some coord values to be turned to NA
 guns_list$Boston <- guns_list$Boston %>%
-  mutate(coord_tmp = lon,
-         lon = str_match(coord_tmp, "[:digit:], (.*?)\\)")[, 2],
-         lon = ifelse(lon == "0.0", NA, lon),
-         lat = str_match(coord_tmp, "\\((.*?),")[, 2],
-         lat = ifelse(lat == "0.0", NA, lat)) %>%
-  dplyr::select(-coord_tmp)
+  mutate(lon = ifelse(lon %in% c("0.0", "0", "-1"), NA, lon),
+         lat = ifelse(lat %in% c("0.0", "0", "-1"), NA, lat))
 
-### Chicago - some NAs, but otherwise good
+### Chicago - some points are located in Missouri. Change to NA.
+guns_list$Chicago <- guns_list$Chicago %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon = ifelse(lat_tmp < 40., NA_character_, lon),
+         lat = ifelse(lat_tmp < 40., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp))
 
-### Cincinnati - some NAs, but otherwise good
+### Cincinnati - looks fine
 
-### Columbia
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Columbia)
+### Columbia - looks fine
 
-### Dallas - in some sort of projected coordinate system
-# possibly EPSG code 2276 - based on: https://gis.dallascityhall.com/documents/DWU-PRO-013-GIS_CityGISDataStandards.pdf
-# and https://spatialreference.org/ref/epsg/2276/
-# also, lat/lon are flipped in the raw data
-guns_list$Dallas <- guns_list$Dallas %>% 
-  mutate(tmp_lon = lat, # correct the flipped lat/lon columns
-         tmp_lat = lon,
-         lon = tmp_lon,
-         lat = tmp_lat) %>% 
-  dplyr::select(-c(tmp_lon, tmp_lat))
+### Dallas - looks fine
 
-guns_list$Dallas <- replace_lat_lon_cols(data = guns_list$Dallas,
-                                         current_crs = 2276,
-                                         new_crs = 4326)
+### Denver - some points with lons/lats near 0. Change to NA
+guns_list$Denver <- guns_list$Denver %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon = ifelse(lat_tmp < 39., NA_character_, lon),
+         lat = ifelse(lat_tmp < 39., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp))
 
-### Denver - looks fine
+### Detroit - some lons/lats in Ohio or near Inf. Change to NA
+guns_list$Detroit <- guns_list$Detroit %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 40. | lat_tmp > 43. |
+                        lon_tmp > 0., NA_character_, lon),
+         lat = ifelse(lat_tmp < 40. | lat_tmp > 43. |
+                        lon_tmp > 0., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Detroit - looks fine
+### Gainesville - Some points well outside of Gainesville but still in Florida. Change to NA
+guns_list$Gainesville <- guns_list$Gainesville %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 29.5, NA_character_, lon),
+         lat = ifelse(lat_tmp < 29.5, NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Gainesville - looks fine
+### Hartford - looks fine
 
-### Hartford
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Hartford)
+### Indianapolis - Some points in TN. Change to NA
+guns_list$Indianapolis <- guns_list$Indianapolis %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 39., NA_character_, lon),
+         lat = ifelse(lat_tmp < 39., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Indianapolis
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Indianapolis)
+### Kansas City - Some points far outside KC. Change to NA
+guns_list$`Kansas City` <- guns_list$`Kansas City` %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lon_tmp > -93. | lon_tmp < -95., NA_character_, lon),
+         lat = ifelse(lon_tmp > -93. | lon_tmp < -95., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Kansas City
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$`Kansas City`)
+### Lincoln - Some points far outside Lincoln. Change to NA
+guns_list$Lincoln <- guns_list$Lincoln %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp > 41., NA_character_, lon),
+         lat = ifelse(lat_tmp > 41., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Lincoln
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Lincoln)
+### Little Rock - looks fine
 
-### Little Rock - add lon and lat info from loc column with the below
-guns_list$`Little Rock` <- guns_list$`Little Rock` %>% 
-  mutate(lon = str_match(loc, "[:digit:], (.*?)\\)")[, 2],
-         lat = str_match(loc, "\\((.*?),")[, 2])
+### Los Angeles - A few 0 points. Change to NA
+guns_list$`Los Angeles` <- guns_list$`Los Angeles` %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 30., NA_character_, lon),
+         lat = ifelse(lat_tmp < 30., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Los Angeles - looks fine
+### Louisville - Some points far outside Louisville. Change to NA
+guns_list$Louisville <- guns_list$Louisville %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 37.5 | lat_tmp > 40.|
+                        lon_tmp > -85. | lon_tmp < -86., NA_character_, lon),
+         lat = ifelse(lat_tmp < 37.5 | lat_tmp > 40.|
+                        lon_tmp > -85. | lon_tmp < -86., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Louisville
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Louisville)
+### Madison - Some points far outside Madison. Change to NA
+guns_list$Madison <- guns_list$Madison %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 42., NA_character_, lon),
+         lat = ifelse(lat_tmp < 42., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Madison
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Madison)
-
-### Minneapolis - looks fine
+### Minneapolis - Some 0s. Change to NA
+guns_list$Minneapolis <- guns_list$Minneapolis %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 44., NA_character_, lon),
+         lat = ifelse(lat_tmp < 44., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
 ### Nashville - looks fine
 
 ### New York - looks fine
 
-### Phoenix
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Phoenix)
+### Phoenix - looks fine
 
-### Portland
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Portland)
+### Portland - looks fine
 
-### Raleigh
-# some coords are (0, 0). Change those to NA.
-guns_list$Raleigh <- guns_list$Raleigh %>% 
-  mutate(lat = ifelse(lat == "0", NA, lat),
-         lon = ifelse(lon == "0", NA, lon))
+### Raleigh - some 0s. Changed to NA
+guns_list$Raleigh <- guns_list$Raleigh %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 35., NA_character_, lon),
+         lat = ifelse(lat_tmp < 35., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Sacramento County
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$`Sacramento County`)
 
-### Saint Paul
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$`Saint Paul`)
+### Sacramento County - many points in the Pacific. Changed to NA
 
-### Salt Lake City - same as Dallas
-# also, a few of the coordinates are not valid, so make those to NA
-guns_list$`Salt Lake City` <- guns_list$`Salt Lake City` %>% 
-  mutate(tmp_lon = lat, # correct the flipped lat/lon columns
-         tmp_lat = lon,
-         lon = tmp_lon,
-         lat = tmp_lat) %>% 
-  dplyr::select(-c(tmp_lon, tmp_lat))
+guns_list$`Sacramento County` <- guns_list$`Sacramento County` %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 38., NA_character_, lon),
+         lat = ifelse(lat_tmp < 38., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-guns_list$`Salt Lake City` <- replace_lat_lon_cols(data = guns_list$`Salt Lake City`,
-                                                   current_crs = 32043,
-                                                   new_crs = 4326) %>% 
-  mutate(lat = ifelse(lat < 0, NA, lat), # make invalid coordinates NA
-         lon = ifelse(lon > 0, NA, lon))
+### Saint Paul - some points far outside Saint Paul. Changed to NA
+guns_list$`Saint Paul` <- guns_list$`Saint Paul` %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 44., NA_character_, lon),
+         lat = ifelse(lat_tmp < 44., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### San Francisco
-# lon/lat columns are flipped for some observations. some obs are also NAs
-guns_list$`San Francisco` <- guns_list$`San Francisco` %>% 
-  mutate(lon_tmp = lon,
-         lat_tmp = lat,
-         # 2(b)(i)
-         lon_tmp = ifelse(lon_tmp == 90, NA, lon_tmp), # treat these are NA observations
-         # 2(b)(ii)
-         lon = ifelse(lon_tmp > 0, lat_tmp, lon_tmp), # lat/lon got flipped incorrectly for some observations 
-         lat = ifelse(lon_tmp > 0, lon_tmp, lat_tmp)) %>% 
-  dplyr::select(-c("lon_tmp", "lat_tmp")) # remove helper columns
+### Salt Lake City - looks fine
 
-### St Louis County
-# lon/lat are flipped
-# also mark (0, 0) as NA
-guns_list$`St Louis County` <- guns_list$`St Louis County` %>% 
-  mutate(tmp_lon = lat, # correct the flipped lat/lon columns
-         tmp_lat = lon,
-         lon = tmp_lon,
-         lat = tmp_lat,
-         lon = ifelse(lon == "0", NA, lon),
-         lat = ifelse(lat == "0", NA, lat)) %>% 
-  dplyr::select(-c(tmp_lon, tmp_lat))
+### San Francisco - some lats near 90. Changed to NA
+guns_list$`San Francisco` <- guns_list$`San Francisco` %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp > 38., NA_character_, lon),
+         lat = ifelse(lat_tmp > 38., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Tucson
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$Tucson)
-guns_df %>% 
-  filter(city == "Tucson") %>% 
-  View
+### St Louis County - some points outside MO. Changed to NA
+guns_list$`St Louis County` <- guns_list$`St Louis County` %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp > 39. | lat_tmp < 38., NA_character_, lon),
+         lat = ifelse(lat_tmp > 39. | lat_tmp < 38., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-### Virginia Beach
-# TO-DO all locations are missing. Need to look at the city file.
-View(guns_list$`Virginia Beach`)
-guns_df %>% 
-  filter(city == "Virginia Beach") %>% 
-  View
+### Tucson - looks fine
 
-tmp_dir <- "C:/Users/echong/Dropbox/SGLP_Azavea/Individual_City_Dataset/"
-tmp_csv <- read_csv(file.path(tmp_dir, "VirginiaBeach_Virginia/raw_data/Police+Incident+Reports.csv"))
+### Virginia Beach - one data point outside of Virginia Beach. Changed to NA
+guns_list$`Virginia Beach` <- guns_list$`Virginia Beach` %>%
+  mutate(lat_tmp = as.numeric(lat),
+         lon_tmp = as.numeric(lon),
+         lon = ifelse(lat_tmp < 36., NA_character_, lon),
+         lat = ifelse(lat_tmp < 36., NA_character_, lat)) %>% 
+  dplyr::select(-c(lat_tmp, lon_tmp))
 
-## 3. ----
+## 4. ----
 guns_clean <- bind_rows(guns_list)
+
+## 5. ----
+guns_list_shp <- future_map(guns_list,
+                            ~ .x %>% 
+                              filter(!is.na(lon),
+                                     !is.na(lat)) %>% 
+                              st_as_sf(coords = c("lon", "lat"),
+                                       crs = 4326,
+                                       remove = FALSE),
+                            .progress = TRUE)
 
 ## 1. Export as rds ----
 # saveRDS(guns_list,
@@ -237,3 +262,7 @@ guns_clean <- bind_rows(guns_list)
 ## 2. Export as rds ----
 # saveRDS(guns_clean,
 #          "~outputs/20/21_guns_clean.rds")
+
+## 3. Export as rds ----
+# saveRDS(guns_list_shp,
+#          "~outputs/20/21_guns_list_shp.rds")

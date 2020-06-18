@@ -1,0 +1,253 @@
+---
+title: "SGLP Working Draft"
+author: "Eugene Chong"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+cache_state = TRUE
+
+knitr::opts_chunk$set(echo = TRUE, cache = cache_state, message = FALSE)
+```
+
+# Admin
+
+Load packages
+
+```{r packages}
+source("~scripts/00 - Admin.R") 
+source("~scripts/01 - Utility Functions.R")
+
+# unload packages
+# detach("package:microbenchmark", unload=TRUE)
+```
+
+# Read Data
+
+## Siegel data for all cities
+
+```{r}
+source("~scripts/10 - Read Siegel Data.R")
+```
+
+## Gun incidents for all cities
+
+```{r}
+# source("~scripts/11 - Read crime data.R")
+guns_df <- readRDS("~outputs/10/11_guns_df.rds")
+```
+
+Sample of data for testing
+
+```{r, eval = FALSE}
+set.seed(1)
+guns_sample_df <- sample_n(guns_df, 10000) 
+guns_sample_ls <- guns_sample_df %>% 
+  split(., # split into nested list of dfs by city
+        f = .$city)
+```
+
+## Census data for all cities
+
+```{r}
+source("~scripts/12 - Read census data.R")
+```
+
+# Explore Data
+
+## Siegel
+
+Date range: 1991-2019
+
+```{r}
+range(siegel_raw$year)
+```
+
+134 different laws...
+
+```{r}
+unique(siegel_raw$law)
+```
+
+Organized into 14 categories...
+
+```{r}
+unique(siegel_raw$Category)
+```
+
+And 50 sub-categories
+
+```{r}
+unique(siegel_raw$Sub.Category)
+```
+
+## Gun Crimes
+
+Number of Cities: 34
+Number of States: 29
+
+```{r}
+unique(guns_df$city)
+unique(guns_df$state)
+```
+
+**Date Range:**
+
+* Occurrence Date: 06/19/1922 - 05/01/2020
+* Report Date: 10/03/1960 - 05/01/2020
+
+```{r, eval = FALSE}
+plan(multiprocess)
+guns_sample_ls <- future_map(guns_sample_ls,
+                        ~ .x %>% 
+                          mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
+         # correct some incorrectly parsed observations
+         clean_occur_date = case_when(occurdate == "1" ~ as.Date(NA),
+                                      clean_occur_date < as.Date("1900-01-01") ~ as.Date(NA), 
+                                      is.na(clean_occur_date) & 
+                                        str_detect(occurdate,
+                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
+                                        as.Date(occurdate, "%m/%d/%y"),
+                                      TRUE ~ clean_occur_date),
+         clean_report_date = anydate(reportdate),
+         clean_report_date = case_when(reportdate == "1" ~ as.Date(NA),
+                                       clean_report_date < as.Date("1900-01-01") ~ as.Date(NA),
+                                       is.na(clean_report_date) & 
+                                        str_detect(reportdate,
+                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
+                                        as.Date(reportdate, "%m/%d/%y"),
+                                      TRUE ~ clean_report_date)))
+```
+
+```{r}
+# source("~scripts/21 - Clean crime data.R")
+guns_clean <- readRDS("~outputs/20/21_guns_clean.rds")
+guns_list <- readRDS("~outputs/20/21_guns_list.rds")
+```
+
+```{r}
+range(guns_clean$clean_occur_date, na.rm = TRUE)
+range(guns_clean$clean_report_date, na.rm = TRUE)
+```
+
+Benchmarking results show `furrr` is fastest for manipulating the data.
+```{r, eval = FALSE}
+benchmark_results <- benchmark("flat" = {
+  flat <- guns_sample_df %>% 
+  mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
+         # correct some incorrectly parsed observations
+         clean_occur_date = case_when(occurdate == "1" ~ as.Date(NA),
+                                      is.na(clean_occur_date) & 
+                                        str_detect(occurdate,
+                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
+                                        as.Date(occurdate, "%m/%d/%y"),
+                                      TRUE ~ clean_occur_date),
+         clean_report_date = anydate(reportdate),
+         clean_report_date = case_when(is.na(clean_report_date) & 
+                                        str_detect(reportdate,
+                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
+                                        as.Date(reportdate, "%m/%d/%y"),
+                                      TRUE ~ clean_report_date))}, # benchmarking shows the furrr approach is fastest (but still not very fast)
+
+"purrr" = {map(guns_sample_ls,
+                        ~ .x %>% 
+                          mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
+         # correct some incorrectly parsed observations
+         clean_occur_date = case_when(occurdate == "1" ~ as.Date(NA),
+                                      is.na(clean_occur_date) & 
+                                        str_detect(occurdate,
+                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
+                                        as.Date(occurdate, "%m/%d/%y"),
+                                      TRUE ~ clean_occur_date),
+         clean_report_date = anydate(reportdate),
+         clean_report_date = case_when(is.na(clean_report_date) & 
+                                        str_detect(reportdate,
+                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
+                                        as.Date(reportdate, "%m/%d/%y"),
+                                      TRUE ~ clean_report_date)))},
+
+# plan(multiprocess)
+"furrr" = {future_map(guns_sample_ls,
+                        ~ .x %>% 
+                          mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
+         # correct some incorrectly parsed observations
+         clean_occur_date = case_when(occurdate == "1" ~ as.Date(NA),
+                                      is.na(clean_occur_date) & 
+                                        str_detect(occurdate,
+                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
+                                        as.Date(occurdate, "%m/%d/%y"),
+                                      TRUE ~ clean_occur_date),
+         clean_report_date = anydate(reportdate),
+         clean_report_date = case_when(is.na(clean_report_date) & 
+                                        str_detect(reportdate,
+                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
+                                        as.Date(reportdate, "%m/%d/%y"),
+                                      TRUE ~ clean_report_date)))},
+  replications = 1
+)
+```
+
+### Plots
+
+Data:
+
+```{r}
+# source("~scripts/21 - Clean crime data.R")
+guns_list_shp <- readRDS("~outputs/20/21_guns_list_shp.rds")
+```
+
+Source script: 
+
+```{r}
+source("~scripts/31 - Explore crime data.R") 
+```
+
+Crime counts by city
+
+```{r}
+kable(gunIncident_summary) %>% 
+  kable_styling()
+```
+
+```{r, fig.height=6}
+gunIncidentsByCityPlot
+```
+
+#### San Francisco
+
+How many NA observations?
+
+```{r}
+paste("There are",
+      sum(is.na(guns_list$`San Francisco`$lon)), "NA longitudes and",
+      sum(is.na(guns_list$`San Francisco`$lat)), "NA latitudes among",
+      nrow(guns_list$`San Francisco`), "total incidents in San Francisco.")
+```
+
+Map of all incidents with coordinates
+
+```{r, fig.height=6}
+sf_incident_map
+```
+
+#### All Cities
+
+```{r, eval = FALSE}
+l <- readRDS("~outputs/~scratch/l.rds")
+```
+
+```{r, eval = FALSE}
+ggmap_list <- readRDS("~outputs/~scratch/ggmap_list.rds")
+```
+
+##### Maps of each city  {.tabset}
+```{r, results='asis', echo = FALSE, fig.height = 8}
+for (i in 1:length(ggmap_list)) {
+  cat("###### ",l$cityNames[i],"\n")
+  print(ggmap_list[[i]])
+  cat('\n\n')
+}
+```
+
+#### Next section
