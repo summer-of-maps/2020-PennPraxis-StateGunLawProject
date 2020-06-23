@@ -206,7 +206,9 @@ source("~scripts/31 - Explore crime data.R")
 Crime counts by city
 
 ```{r}
-kable(gunIncident_summary) %>% 
+gunIncident_summary %>% 
+  arrange(desc(prop)) %>% 
+  kable() %>% 
   kable_styling()
 ```
 
@@ -214,40 +216,44 @@ kable(gunIncident_summary) %>%
 gunIncidentsByCityPlot
 ```
 
-#### San Francisco
-
 How many NA observations?
 
 ```{r}
-paste("There are",
-      sum(is.na(guns_list$`San Francisco`$lon)), "NA longitudes and",
-      sum(is.na(guns_list$`San Francisco`$lat)), "NA latitudes among",
-      nrow(guns_list$`San Francisco`), "total incidents in San Francisco.")
+na_coords_summary <- map(guns_list,
+                            ~ sum(is.na(.x$lon) | is.na(.x$lat)) /
+                              nrow(.x)) %>% 
+  bind_rows() %>% 
+  gather(key = "City",
+         value = "pct_NA")
 ```
 
-Map of all incidents with coordinates
+```{r}
+na_coords_summary %>% 
+  arrange(desc(pct_NA)) %>% 
+  kable() %>% 
+  kable_styling()
+```
 
-```{r, fig.height=6}
+Map of all incidents in San Francisco with coordinates
+
+```{r, fig.height = 6}
 sf_incident_map
 ```
 
 #### All Cities
 
-```{r, eval = FALSE}
-l <- readRDS("~outputs/~scratch/l.rds")
-```
-
-```{r, eval = FALSE}
-ggmap_list <- readRDS("~outputs/~scratch/ggmap_list.rds")
-```
-
 ##### Maps of each city  {.tabset}
+
 ```{r, results='asis', echo = FALSE, fig.height = 8}
-for (i in 1:length(ggmap_list)) {
-  cat("###### ",l$cityNames[i],"\n")
-  print(ggmap_list[[i]])
+tmp <- list.files("~outputs/Plots/31a_gunCrimes",
+                  full.names = TRUE)
+
+for (i in 1:length(tmp)) {
+  cat("###### ",names(guns_list[i]),"\n")
+  cat(paste0("![](", tmp[i], "){width=80%}"), "\n")
   cat('\n\n')
 }
 ```
+
 
 #### Next section

@@ -4,19 +4,18 @@
 # 2. Maps all incidents in San Francisco that have coordinates
 #
 # Exports: 
+# 1. gunIncident_summary as 31_gunIncident_summary.rds
 #
 # To-do:
-# 1. Consider moving the sf_incidents_shp code to 21.R and generalizing it to all cities.
+# 1. 
 ##########################################################################
 
 ## 1. ----
-# allCrimes_count <- allCrimes_df %>% 
-#   group_by(city) %>% 
-#   summarize(count = n()) %>% 
+allCrimes_count <- readRDS("~outputs/30/30_allCrimes_count.rds")
+# allCrimes_count <- allCrimes_df %>%
+#   group_by(city) %>%
+#   summarize(count = n()) %>%
 #   arrange(desc(count))
-# saveRDS(allCrimes_count,
-#         file = "~outputs/~scratch/allCrimes_count.rds")
-allCrimes_count <- readRDS("~outputs/~scratch/allCrimes_count.rds")
 
 gunIncident_count <- guns_clean %>% 
   group_by(city) %>% 
@@ -60,45 +59,6 @@ sf_incident_map <- ggmap(sf_basemap) +
           inherit.aes = FALSE) +
   plotTheme()
 
-## 3. all cities crime maps ----
-# basemap_list <- map(guns_list_shp,
-#                     ~ get_map(base_map_bb(.x),
-#                               source = "stamen",
-#                               maptype = "toner-background",
-#                               color = "bw"))
-# saveRDS(basemap_list,
-#         file = "~outputs/~scratch/basemap_list.rds")
-basemap_list <- readRDS("~outputs/~scratch/basemap_list.rds")
-
-# l <- list(basemaps = basemap_list,
-#          cityNames = names(basemap_list),
-#          gun_points = guns_list_shp)
-# saveRDS(l,
-#         file = "~outputs/~scratch/l.rds")
-l <- readRDS("~outputs/~scratch/l.rds")
-
-# ggmap_list <- pmap(.l = l,
-#                   ~ with(list(...),
-#                          ggmap(basemaps) +
-#                            geom_sf(data = gun_points,
-#                                    color = "#d7301f",
-#                                    alpha = 0.25,
-#                                    inherit.aes = FALSE) +
-#                            labs(title = paste("Gun crime incidents in", cityNames))))
-# 
-# saveRDS(ggmap_list,
-#         file = "~outputs/~scratch/ggmap_list.rds")
-ggmap_list <- readRDS("~outputs/~scratch/ggmap_list.rds")
-
-
-## Export as PNG
-# plots <- arrangeGrob(grobs = ggmap_list,
-#                      ncol = 2)
-# ggsave(plot = plots,
-#        filename = "~outputs/Plots/~scratch/ggmap_test.png",
-#        units = "in",
-#        width = 24,
-#        height = 120,
-#        limitsize = FALSE)
-
-
+## 1. Export gunIncident_summary as rds ----
+# saveRDS(allCrimes_count,
+#         file = "~outputs/30/30_allCrimes_count.rds")
