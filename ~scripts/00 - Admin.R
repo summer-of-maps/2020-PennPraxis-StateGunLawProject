@@ -29,9 +29,11 @@ library(data.table)
 library(sf)
 library(tmap) # thematic mapping
 library(tmaptools) # spatial utility functions
+library(concaveman)
 
 # census
 library(tidycensus)
+library(tigris)
 
 # visualization and geocoding
 library(ggmap) # basemaps
@@ -52,10 +54,6 @@ census_api_key(census_key, install = T, overwrite = TRUE)
 
 # (d)
 options(tigris_use_cache = TRUE)
-
-# (d)
-google_key <- readRDS("API_keys/google_key.rds")
-register_google(google_key)
 
 ## 3. ----
 options(scipen=999)

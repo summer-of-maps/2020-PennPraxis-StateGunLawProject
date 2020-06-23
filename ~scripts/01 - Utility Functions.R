@@ -6,6 +6,9 @@
 # 1. base_map_bb(): Get a bounding box for use with the ggmap package's get_map() function
 # 2. replace_lat_lon_cols(): some cities in the guns dataset have lon/lat in projected coordinates.
 #     This replaces them with coordinates in a new crs (default WGS84)
+# 3. intersect_geo_lists(): loop of two lists of sf objects (list1 and list2) to keep the 
+#     features in each list1 element that intersect with a feature in the corresponding 
+#     list2 element.
 #
 # To-do:
 # 1. Moran's I calculator a given set of points and polygons containing those points
@@ -54,4 +57,18 @@ replace_lat_lon_cols <- function(data, # e.g., df with lon/lat columns guns_list
     left_join(tmp, by = "tmp_ID") %>% 
     # reset the order of the columns and drop the tmp_ID column
     dplyr::select(all_of(tmp_col_names))
+}
+
+## 3. ----
+intersect_geo_lists <- function(list1, # features you want to filter
+                                list2  # features to filter by
+                                ) {
+  
+  suppressMessages(
+  
+    map2(list1,
+       list2,
+       ~ .x[.y,])
+  
+    )
 }

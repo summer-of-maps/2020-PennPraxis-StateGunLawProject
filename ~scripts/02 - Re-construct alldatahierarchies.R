@@ -771,7 +771,7 @@ sac <- sac %>%
          # loc = NA_character_,
          # reportdate = NA_character_,
          city = "Sacramento County",
-         state = "North California") %>% 
+         state = "California") %>% 
   dplyr::select(all_of(col_names))
 
 #### 29. Saint Paul, MN ----
@@ -1036,5 +1036,5 @@ alldata_hierachy <- alldata %>%
 #### D. Export as csv ----
 # fwrite(alldata,
 #        file = file.path(data_dir, "Full_City_Dataset/alldata_Azavea.csv"))
-# fwrite(alldata_hierachy,
+# fwrite(alldata_hierarchy,
 #        file = file.path(data_dir, "Full_City_Dataset/alldatahierarchies_Azavea.csv"))

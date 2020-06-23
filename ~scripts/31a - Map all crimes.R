@@ -49,6 +49,8 @@ map2(ggmap_list,
              filename = paste("~outputs/Plots/31a_gunCrimes/31a_",
                               .y,
                               "_gunCrimes.png",
-                              sep = "")),
-    units = "in",
-    height = 8)
+                              sep = ""),
+             units = "in",
+             dpi = 72,
+             width = 7,
+             height = 7))

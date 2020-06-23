@@ -6,9 +6,12 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+library(knitr)
 cache_state = TRUE
+eval_state = FALSE # use this for testing chunks that should/should not be run in the final knit doc
 
-knitr::opts_chunk$set(echo = TRUE, cache = cache_state, message = FALSE)
+opts_chunk$set(echo = TRUE, cache = cache_state, message = FALSE)
+knit_hooks$set(optipng = hook_optipng)
 ```
 
 # Admin
@@ -33,14 +36,20 @@ source("~scripts/10 - Read Siegel Data.R")
 
 ## Gun incidents for all cities
 
-```{r}
+```{r, eval = eval_state}
 # source("~scripts/11 - Read crime data.R")
 guns_df <- readRDS("~outputs/10/11_guns_df.rds")
 ```
 
+```{r}
+# source("~scripts/21 - Clean crime data.R")
+guns_clean <- readRDS("~outputs/20/21_guns_clean.rds")
+guns_list <- readRDS("~outputs/20/21_guns_list.rds")
+```
+
 Sample of data for testing
 
-```{r, eval = FALSE}
+```{r, eval = eval_state}
 set.seed(1)
 guns_sample_df <- sample_n(guns_df, 10000) 
 guns_sample_ls <- guns_sample_df %>% 
@@ -50,7 +59,7 @@ guns_sample_ls <- guns_sample_df %>%
 
 ## Census data for all cities
 
-```{r}
+```{r, results = "hide"}
 source("~scripts/12 - Read census data.R")
 ```
 
@@ -88,8 +97,8 @@ Number of Cities: 34
 Number of States: 29
 
 ```{r}
-unique(guns_df$city)
-unique(guns_df$state)
+unique(guns_clean$city)
+unique(guns_clean$state)
 ```
 
 **Date Range:**
@@ -97,7 +106,7 @@ unique(guns_df$state)
 * Occurrence Date: 06/19/1922 - 05/01/2020
 * Report Date: 10/03/1960 - 05/01/2020
 
-```{r, eval = FALSE}
+```{r, eval = eval_state}
 plan(multiprocess)
 guns_sample_ls <- future_map(guns_sample_ls,
                         ~ .x %>% 
@@ -121,18 +130,12 @@ guns_sample_ls <- future_map(guns_sample_ls,
 ```
 
 ```{r}
-# source("~scripts/21 - Clean crime data.R")
-guns_clean <- readRDS("~outputs/20/21_guns_clean.rds")
-guns_list <- readRDS("~outputs/20/21_guns_list.rds")
-```
-
-```{r}
 range(guns_clean$clean_occur_date, na.rm = TRUE)
 range(guns_clean$clean_report_date, na.rm = TRUE)
 ```
 
 Benchmarking results show `furrr` is fastest for manipulating the data.
-```{r, eval = FALSE}
+```{r, eval = eval_state}
 benchmark_results <- benchmark("flat" = {
   flat <- guns_sample_df %>% 
   mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
@@ -212,7 +215,7 @@ gunIncident_summary %>%
   kable_styling()
 ```
 
-```{r, fig.height=6}
+```{r, optipng='-o7', fig.height=6}
 gunIncidentsByCityPlot
 ```
 
@@ -236,7 +239,7 @@ na_coords_summary %>%
 
 Map of all incidents in San Francisco with coordinates
 
-```{r, fig.height = 6}
+```{r, optipng='-o7', fig.height = 6}
 sf_incident_map
 ```
 
@@ -244,13 +247,13 @@ sf_incident_map
 
 ##### Maps of each city  {.tabset}
 
-```{r, results='asis', echo = FALSE, fig.height = 8}
+```{r, optipng='-o7', results='asis', echo = FALSE}
 tmp <- list.files("~outputs/Plots/31a_gunCrimes",
                   full.names = TRUE)
 
 for (i in 1:length(tmp)) {
   cat("###### ",names(guns_list[i]),"\n")
-  cat(paste0("![](", tmp[i], "){width=80%}"), "\n")
+  cat(paste0("![](", tmp[i], "){width=65%}"), "\n")
   cat('\n\n')
 }
 ```
