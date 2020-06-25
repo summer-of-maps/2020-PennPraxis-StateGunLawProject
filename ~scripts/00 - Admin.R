@@ -24,12 +24,15 @@ library(anytime) # datetime manipulation
 library(furrr) # parallel processing
 library(readxl)
 library(data.table)
+library(lubridate)
 
 # spatial data
 library(sf)
 library(tmap) # thematic mapping
 library(tmaptools) # spatial utility functions
 library(concaveman)
+library(sp)
+library(spdep)
 
 # census
 library(tidycensus)
@@ -40,6 +43,7 @@ library(ggmap) # basemaps
 library(gridExtra)
 library(knitr)
 library(kableExtra)
+# library(wesanderson) # palettes
 
 # debugging
 library(rbenchmark) # time processing speed
@@ -56,9 +60,25 @@ census_api_key(census_key, install = T, overwrite = TRUE)
 options(tigris_use_cache = TRUE)
 
 ## 3. ----
-options(scipen=999)
+options(scipen = 999)
 
 ## 4. ----
 plotTheme <- function(){
   theme_bw()
+}
+
+mapTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = 14,colour = "black"),
+    plot.subtitle=element_text(face="italic"),
+    plot.caption=element_text(hjust=0),
+    axis.ticks = element_blank(),
+    panel.background = element_blank(),axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2)
+  )
 }

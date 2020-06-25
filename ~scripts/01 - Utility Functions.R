@@ -9,9 +9,13 @@
 # 3. intersect_geo_lists(): loop of two lists of sf objects (list1 and list2) to keep the 
 #     features in each list1 element that intersect with a feature in the corresponding 
 #     list2 element.
+# 4. find_Moran_I(): input sf polygons with var of interest and return output of moran.test()
+#     for those polygons
+# 5. q5(): factor continuous variable in quintiles
+# 6. qBr(): find quintile breaks
 #
 # To-do:
-# 1. Moran's I calculator a given set of points and polygons containing those points
+# 1. 
 # 2. 
 ##########################################################################
 
@@ -71,4 +75,44 @@ intersect_geo_lists <- function(list1, # features you want to filter
        ~ .x[.y,])
   
     )
+}
+
+## 4. ----
+find_Moran_I <- function(shp, # geographies of interest
+                         var_name = "gun_count",
+                         queen = TRUE, # neighbor type 
+                         style = "W" # neighbor weight style - see ?nb2listw()
+) {
+  
+  ## Returns the output of function moran.test()
+  
+  # make sp object
+  sp <- as(shp, "Spatial")
+  # find neighbors
+  neighb <- poly2nb(sp, 
+                    queen = queen)
+  # find neighbor weights
+  weights <- nb2listw(neighb,
+                      style = style,
+                      zero.policy = TRUE)
+  
+  # calculate Moran's I
+  moran.test(sp[[var_name]],
+             weights,
+             zero.policy = TRUE)
+  
+}
+
+## 5. ----
+q5 <- function(variable) {as.factor(ntile(variable, 5))}
+
+## 6. ----
+qBr <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(quantile(round(df[[variable]],0),
+                          c(.01,.2,.4,.6,.8), na.rm=T))
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]]), digits = 3),
+                 c(.01,.2,.4,.6,.8), na.rm=T)
+  }
 }

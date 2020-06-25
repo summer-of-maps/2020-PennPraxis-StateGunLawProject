@@ -34,13 +34,12 @@ ggmap_list <- pmap(.l = l,
                            labs(title = paste("Gun crime incidents in", cityNames))))
 
 ## 1. Export basemap_list as RDS ----
-saveRDS(basemap_list,
-        file = "~outputs/30/31a_basemap_list.rds")
-basemap_list <- readRDS("~outputs/30/31a_basemap_list.rds")
+# saveRDS(basemap_list,
+#         file = "~outputs/30/31a_basemap_list.rds")
 
 ## 2. Export ggmap_list as RDS ----
-saveRDS(ggmap_list,
-        file = "~outputs/~large_files/31a_ggmap_list.rds")
+# saveRDS(ggmap_list,
+#         file = "~outputs/~large_files/31a_ggmap_list.rds")
 
 ## 3. Export ggmap_list as PNGs ----
 map2(ggmap_list,

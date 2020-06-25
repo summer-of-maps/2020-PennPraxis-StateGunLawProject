@@ -36,9 +36,8 @@ counties <- map(states_list,
                            class = "sf") %>% 
                   st_transform(4326))
 
-saveRDS(counties,
-        file = "~outputs/10/12_counties.rds")
-counties <- readRDS("~outputs/10/12_counties.rds")
+# saveRDS(counties,
+#         file = "~outputs/10/12_counties.rds")
 
 # tracts
 allStateTracts <- map(states_list,
@@ -52,9 +51,8 @@ allStateTracts <- map(states_list,
                                  st_transform(4326),
                                otherwise = NA_character_))
 
-saveRDS(allStateTracts,
-        file = "~outputs/10/12_allStateTracts.rds")
-allStateTracts <- readRDS("~outputs/10/12_allStateTracts.rds")
+# saveRDS(allStateTracts,
+#         file = "~outputs/10/12_allStateTracts.rds")
 
 # places
 places <- map(states_list,
@@ -63,10 +61,9 @@ places <- map(states_list,
                        class = "sf") %>% 
                 st_transform(4326))
 
-saveRDS(places,
-        file = "~outputs/~large_files/12_places.rds",
-        compress = TRUE)
-places <- readRDS("~outputs/~large_files/12_places.rds")
+# saveRDS(places,
+#         file = "~outputs/~large_files/12_places.rds",
+#         compress = TRUE)
 
 ## 3. ----
 allStateBGs <- map(states_list,
@@ -79,7 +76,6 @@ allStateBGs <- map(states_list,
                               st_transform(4326),
                             otherwise = NA_character_))
 
-saveRDS(allStateBGs,
-        file = "~outputs/10/12_allStateBGs.rds",
-        compress = TRUE)
-allStateTracts <- readRDS("~outputs/10/12_allStateBGs.rds")
+# saveRDS(allStateBGs,
+#         file = "~outputs/10/12_allStateBGs.rds",
+#         compress = TRUE)

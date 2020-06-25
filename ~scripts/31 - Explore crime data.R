@@ -38,26 +38,26 @@ gunIncidentsByCityPlot <- ggplot(gunIncident_summary,
 
 
 ## 2. SF crime map ----
-sf_incidents_shp <- guns_list$`San Francisco` %>% 
-  filter(!is.na(lon),
-         !is.na(lat)) %>% 
-  st_as_sf(coords = c("lon", "lat"),
-           crs = 4326,
-           remove = FALSE)
-
-sf_basemap <- get_map(base_map_bb(sf_incidents_shp), 
-                      source = "stamen",
-                      maptype = "toner-background",
-                      color = "bw")
-
-sf_incident_map <- ggmap(sf_basemap) +
-  geom_sf(data = sf_tracts_2018,
-          inherit.aes = FALSE) +
-  geom_sf(data = sf_incidents_shp,
-          color = "#d7301f",
-          alpha = 0.3,
-          inherit.aes = FALSE) +
-  plotTheme()
+# sf_incidents_shp <- guns_list$`San Francisco` %>% 
+#   filter(!is.na(lon),
+#          !is.na(lat)) %>% 
+#   st_as_sf(coords = c("lon", "lat"),
+#            crs = 4326,
+#            remove = FALSE)
+# 
+# sf_basemap <- get_map(base_map_bb(sf_incidents_shp), 
+#                       source = "stamen",
+#                       maptype = "toner-background",
+#                       color = "bw")
+# 
+# sf_incident_map <- ggmap(sf_basemap) +
+#   geom_sf(data = sf_tracts_2018,
+#           inherit.aes = FALSE) +
+#   geom_sf(data = sf_incidents_shp,
+#           color = "#d7301f",
+#           alpha = 0.3,
+#           inherit.aes = FALSE) +
+#   plotTheme()
 
 ## 1. Export gunIncident_summary as rds ----
 # saveRDS(allCrimes_count,

@@ -3,17 +3,21 @@
 # 1. Splits the gun crimes 
 # 2. Geocodes observations for Virginia Beach
 # 3. Cleans the gun crime data by:
-#   (a) parsing occurrence date and reported date 
+#   (a) parsing occurrence date and reported date and
+#         adding a year column for rolling windows.
 #   (b) documenting cleaning steps for every city
 #       NB: For each city, I checked lon/lat ranges and clean_occur_date 
 #           and clean_report_date for sensible values for each
+#   (c) removing years with fewer than 1% of the total gun observations
 # 4. Flattens the list into a dataframe
 # 5. Creates an sf version of the crime data in list form
+# 6. #5 above, but with each city's crimes split into nested dataframes for each year
 #
 # Exports: 
 # 1. guns_list as 21_guns_list.rds
 # 2. guns_clean as 21_guns_clean.rds
 # 3. guns_list_shp as 21_guns_list_shp.rds
+# 4. guns_list_shp_byYear as 21_guns_list_shp_byYear.rds
 #
 # To-do:
 # 1. 
@@ -63,7 +67,10 @@ guns_list <- future_map(guns_list,
                                                                  str_detect(reportdate,
                                                                             ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600"
                                                                  as.Date(reportdate, "%m/%d/%y"),
-                                                               TRUE ~ clean_report_date)),
+                                                               TRUE ~ clean_report_date),
+                                 year = ifelse(!is.na(clean_occur_date),
+                                               lubridate::year(clean_occur_date),
+                                               lubridate::year(clean_report_date))),
                         .progress = TRUE)
 
 # 3(b)
@@ -255,6 +262,11 @@ guns_list_shp <- future_map(guns_list,
                                        remove = FALSE),
                             .progress = TRUE)
 
+## 6. ----
+guns_list_shp_byYear <- map(guns_list_shp,
+                            ~ split(.x,
+                                    .x$year))
+
 ## 1. Export as rds ----
 # saveRDS(guns_list,
 #         "~outputs/20/21_guns_list.rds")
@@ -266,3 +278,7 @@ guns_list_shp <- future_map(guns_list,
 ## 3. Export as rds ----
 # saveRDS(guns_list_shp,
 #          "~outputs/20/21_guns_list_shp.rds")
+
+## 4. Export as rds ----
+# saveRDS(guns_list_shp_byYear,
+#         "~outputs/20/21_guns_list_shp_byYear.rds")
