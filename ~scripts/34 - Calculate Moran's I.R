@@ -26,11 +26,16 @@ tracts_I <- map(tracts_crimeCounts,
 tracts_pop_I <- map(tracts_crimeCounts,
                     function(x) map(x,
                                     function(y) find_Moran_I(shp = y,
-                                                             var_name = "estimate",
+                                                             var_name = "pop",
                                                              queen = TRUE,
                                                              style = "W")))
 
-
+tracts_per100_I <- map(tracts_crimeCounts,
+                    function(x) map(x,
+                                    function(y) find_Moran_I(shp = y,
+                                                             var_name = "guns_per100",
+                                                             queen = TRUE,
+                                                             style = "W")))
 
 ## 1b. ----
 # BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
@@ -44,18 +49,29 @@ BGs_I <- map(BGs_crimeCounts,
 BGs_pop_I <- map(BGs_crimeCounts,
              function(x) map(x,
                              function(y) find_Moran_I(shp = y,
-                                                      var_name = "estimate",
+                                                      var_name = "pop",
                                                       queen = TRUE,
                                                       style = "W")))
+
+BGs_per100_I <- map(BGs_crimeCounts,
+                 function(x) map(x,
+                                 function(y) find_Moran_I(shp = y,
+                                                          var_name = "guns_per100",
+                                                          queen = TRUE,
+                                                          style = "W")))
 
 ## 1. Export as rds ----
 # saveRDS(tracts_I,
 #         file = "~outputs/30/34_tracts_I.rds")
 # saveRDS(tracts_pop_I,
 #         file = "~outputs/30/34_tracts_pop_I.rds")
+# saveRDS(tracts_per100_I,
+#         file = "~outputs/30/34_tracts_per100_I.rds")
 
 ## 2. Export as rds ----
 # saveRDS(BGs_I,
 #         file = "~outputs/30/34_BGs_I.rds")
 # saveRDS(BGs_pop_I,
 #         file = "~outputs/30/34_BGs_pop_I.rds")
+# saveRDS(BGs_per100_I,
+#         file = "~outputs/30/34_BGs_per100_I.rds")

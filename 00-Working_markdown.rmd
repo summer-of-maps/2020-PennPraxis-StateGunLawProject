@@ -254,7 +254,19 @@ for (i in 1:length(tmp)) {
 
 ### Moran's I
 
-Read in the study area geographies w/ crime counts per tract
+**What is Moran's I?**
+
+Inferential statistic ranging from -1 to 1 that describes the level of dispersal/clustering evident in spatial data. Associated with a p-value that provides the statistical significance of the estimate.
+
+![Moran's I range](https://geobitz.files.wordpress.com/2016/01/morans_i_visual.png?w=471&h=250)
+
+That assumes a uniform intensity to all values. We need to choose some value for determining an "intensity" for the areas. For now, I went with "gun crimes per 100 people". Is there another metric that might be better?
+
+Read in the study area geographies w/ crimes per 100, raw crime counts, and population per tract.
+
+Another question is the geographic scope we look at. Some choices. I looked at Census-designated place for now, because those generally align with published city borders.
+
+A concave or convex hull may better fit the data, though.
 
 * Tracts selected via:
     +  Concave hull of gun crime observations
@@ -267,15 +279,35 @@ Read in the study area geographies w/ crime counts per tract
 # source("~scripts/33 - Aggregate crimes and census geographies.R") 
 tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
 BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
+```
 
+```{r, cache = FALSE}
+tmap::tmap_mode("view")
+
+tmap::qtm(tracts_crimeCounts$byCaveHull$`San Francisco`, title = "Concave hull of crimes")
+```
+
+```{r, cache = FALSE}
+tmap::qtm(tracts_crimeCounts$byVexHull$`San Francisco`, title = "Convex hull of crimes")
+```
+
+```{r, cache = FALSE}
+tmap::qtm(tracts_crimeCounts$byCounty$`San Francisco`, title = "County")
+```
+
+```{r, cache = FALSE}
+tmap::qtm(tracts_crimeCounts$byPlace$`San Francisco`, title = "Census-designated place")
+```
+
+```{r}
 # source("~scripts/34 - Calculate Moran's I.R") 
 tracts_I <- readRDS("~outputs/30/34_tracts_I.rds")
 BGs_I <- readRDS("~outputs/30/34_BGs_I.rds")
 tracts_pop_I <- readRDS("~outputs/30/34_tracts_pop_I.rds")
 BGs_pop_I <- readRDS("~outputs/30/34_BGs_pop_I.rds")
+tracts_per100_I <- readRDS("~outputs/30/34_tracts_per100_I.rds")
+BGs_per100_I <- readRDS("~outputs/30/34_BGs_per100_I.rds")
 ```
-
-Plot of Moran's I for **census tracts and block groups selected by census-designated place**.
 
 ```{r}
 # crime Moran's I tract
@@ -326,6 +358,30 @@ p_pop_BG <- map_dfr(BGs_pop_I$byPlace,
   mutate(geo = "Block Group",
          pval_pop = ifelse(pval_pop < 0.01, "< 0.01", "> 0.01"))
 
+# per100 Moran's I tract
+I_per100_tr <- map_dfr(tracts_per100_I$byPlace,
+                     ~ .x$estimate[1],
+                     .id = "City") %>% 
+  rename(per100_I = `Moran I statistic`)
+
+p_per100_tr <- map_dfr(tracts_per100_I$byPlace,
+                     ~ data.frame(pval_per100 = .x$p.value),
+                     .id = "City") %>% 
+  mutate(geo = "Tract",
+         pval_per100 = ifelse(pval_per100 < 0.01, "< 0.01", "> 0.01"))
+
+# per100 Moran's I block group
+I_per100_BG <- map_dfr(BGs_per100_I$byPlace,
+                     ~ .x$estimate[1],
+                     .id = "City") %>% 
+  rename(per100_I = `Moran I statistic`)
+
+p_per100_BG <- map_dfr(BGs_per100_I$byPlace,
+                     ~ data.frame(pval_per100 = .x$p.value),
+                     .id = "City") %>% 
+  mutate(geo = "Block Group",
+         pval_per100 = ifelse(pval_per100 < 0.01, "< 0.01", "> 0.01"))
+
 
 
 I_crime_tmp <- left_join(I_crime_tr, p_crime_tr,
@@ -336,25 +392,37 @@ I_pop_tmp <- left_join(I_pop_tr, p_pop_tr,
                   by = "City") %>% 
   rbind(left_join(I_pop_BG, p_pop_BG,
                   by = "City"))
-I_tmp <- left_join(I_crime_tmp, I_pop_tmp, by = c("City", "geo"))
+I_per100_tmp <- left_join(I_per100_tr, p_per100_tr,
+                  by = "City") %>% 
+  rbind(left_join(I_per100_BG, p_per100_BG,
+                  by = "City"))
+I_tmp <- left_join(I_crime_tmp, I_pop_tmp, by = c("City", "geo")) %>% 
+  left_join(I_per100_tmp, by = c("City", "geo"))
 
 I_wide <- I_tmp %>% 
   pivot_wider(names_from = "geo",
-              values_from = c("crime_I", "pop_I", "pval_crime", "pval_pop")) %>% 
+              values_from = c("crime_I", "pop_I", "pval_crime", "pval_pop", "per100_I", "pval_per100")) %>% 
   dplyr::select(City, 
+                per100_tr = per100_I_Tract,
+                per100_tr_p = pval_per100_Tract,
                 crime_tr = crime_I_Tract,
                 crime_tr_p = pval_crime_Tract,
                 pop_tr = pop_I_Tract,
                 pop_tr_p = pval_pop_Tract,
+                per100_BG = `per100_I_Block Group`,
+                per100_BG_p = `pval_per100_Block Group`,
                 crime_BG = `crime_I_Block Group`,
                 crime_BG_p = `pval_crime_Block Group`,
                 pop_BG = `pop_I_Block Group`,
                 pop_BG_p = `pval_pop_Block Group`)
 ```
 
-Question for Dana: how might we interpret a city that has a large difference in Moran's I between tracts and block groups (e.g. Kansas City)?
+Below is a table showing Moran's I for crimes per 100 for census tracts and block groups for each study area _selected by the relevant Census-designated place_, raw crime counts, and population. We see a big range from 0 (essentially random gun crime distribution relative to population) to very high 
 
-Need to add columns comparing this to population.
+Questions: 
+
+* Weighting by population is important. Is Moran's I of crimes per 100 the best way?
+* How might we interpret a city that has a large difference in Moran's I between tracts and block groups (e.g. Kansas City)?
 
 ```{r}
 I_wide %>% 
@@ -368,6 +436,11 @@ I_wide %>%
                            background = ifelse(str_detect(pop_tr_p, ">"),
                              "red", 
                              "white")),
+         per100_tr_p = cell_spec(per100_tr_p,
+                           "html",
+                           background = ifelse(str_detect(per100_tr_p, ">"),
+                             "red", 
+                             "white")),
          crime_BG_p = cell_spec(crime_BG_p,
                            "html",
                            background = ifelse(str_detect(crime_BG_p, ">"),
@@ -377,12 +450,17 @@ I_wide %>%
                            "html",
                            background = ifelse(str_detect(pop_BG_p, ">"),
                              "red", 
+                             "white")),
+         per100_BG_p = cell_spec(per100_BG_p,
+                           "html",
+                           background = ifelse(str_detect(per100_BG_p, ">"),
+                             "red", 
                              "white"))) %>% 
-  arrange(desc(crime_tr)) %>%
+  arrange(desc(per100_tr)) %>%
   kable(format = "html",
         escape = FALSE,
         digits = 2,
-        caption = "Moran's I for Crimes and Population by Tract and Block Group") %>%
+        caption = "Moran's I for Crimes per 100 people, Crime Count, and Population by Tract and Block Group") %>%
   kable_styling(bootstrap_options = "striped")
 ```
 
@@ -390,9 +468,9 @@ I_wide %>%
 ##### Crimes by census tract for each city {.tabset}
 
 ```{r, optipng='-o7', results='asis', echo = FALSE}
-# source("~scripts/31a - Map all crimes.R") 
+# source("~scripts/33a - Map census geographies by crime counts.R") 
 
-tmp <- list.files("~outputs/Plots/33a_tract_crime_maps/byPlace",
+tmp <- list.files("~outputs/Plots/33a_tract_per100_maps/byPlace",
                   full.names = TRUE)
 
 for (i in 1:length(tmp)) {
