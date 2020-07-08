@@ -88,6 +88,26 @@ And 50 sub-categories
 unique(siegel_raw$Sub.Category)
 ```
 
+Scores over time 
+
+```{r}
+# source("~scripts/20 - Clean Siegel data.R")
+siegelSum <- readRDS("~outputs/20/20_siegelSum.RDS")
+```
+
+```{r, fig.height = 14, fig.width = 16}
+ggplot(siegelSum,
+       aes(x = year,
+           y = score)) +
+  geom_line(size = 1) +
+  facet_wrap(~ state, ncol = 10, scales = "free_x") +
+  plotTheme() +
+  labs(title = "Siegel Scores",
+       x = "Year",
+       y = "Score (sum of gun laws)") +
+  theme(panel.spacing.x = unit(8, "mm"))
+```
+
 ## Gun Crimes
 
 Number of Cities: 34

@@ -69,16 +69,17 @@ plotTheme <- function(){
 
 mapTheme <- function(base_size = 12) {
   theme(
-    text = element_text( color = "black"),
-    plot.title = element_text(size = 14,colour = "black"),
-    plot.subtitle=element_text(face="italic"),
-    plot.caption=element_text(hjust=0),
+    text = element_text(color = "black"),
+    plot.title = element_text(size = 14, colour = "black"),
+    plot.subtitle = element_text(face = "italic"),
+    plot.caption = element_text(hjust = 0),
     axis.ticks = element_blank(),
-    panel.background = element_blank(),axis.title = element_blank(),
+    panel.background = element_blank(),
+    axis.title = element_blank(),
     axis.text = element_blank(),
     axis.title.x = element_blank(),
     axis.title.y = element_blank(),
     panel.grid.minor = element_blank(),
-    panel.border = element_rect(colour = "black", fill=NA, size=2)
+    panel.border = element_rect(colour = "black", fill = NA, size = 2)
   )
 }
