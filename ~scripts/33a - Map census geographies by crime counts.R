@@ -46,7 +46,6 @@ tract_crime_maps <- map(tracts_crimeCounts,
                                  # scale_fill_viridis_c(name = "Gun Crime/nCount") +
                                  mapTheme() +
                                  labs(title = "Gun Crimes by Census Tract")))
-                        )
 
 ## 1b. ----
 # BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
@@ -75,7 +74,6 @@ BG_crime_maps <- map(BGs_crimeCounts,
                                  # scale_fill_viridis_c(name = "Gun Crime/nCount") +
                                  mapTheme() +
                                  labs(title = "Gun Crimes by Block Group")))
-)
 
 ## 2a. ----
 # tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
@@ -103,7 +101,6 @@ tract_per100_maps <- map(tracts_crimeCounts,
                                  # scale_fill_viridis_c(name = "Gun Crimes /nper 100 People") +
                                  mapTheme() +
                                  labs(title = "Gun Crimes per 100 People by Census Tract")))
-)
 
 ## 2b. ----
 # BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
@@ -132,7 +129,6 @@ BG_per100_maps <- map(BGs_crimeCounts,
                               # scale_fill_viridis_c(name = "Gun Crime /nper 100 People") +
                               mapTheme() +
                               labs(title = "Gun Crimes per 100 People by Block Group")))
-)
 
 ## 1a. Export maps as pngs ----
 map2(tract_crime_maps,

@@ -1,17 +1,22 @@
 ##########################################################################
 # This script:
-# 1. Counts and plots gun crimes by city
+# 1. Counts gun crimes:
+#   (a) total by city
+#   (b) by year and by city
 # 2. Maps all incidents in San Francisco that have coordinates
 #
 # Exports: 
-# 1. gunIncident_summary as 31_gunIncident_summary.rds
+# 1. allCrimes_count as 31_allCrimes_count.rds
+# 2. gunIncident_summary as 31_gunIncident_summary.rds
+# 3. gunCount_byYear as 31_gunCount_byYear.rds
+# 4. gunCount_byYear_list as 31_gunCount_byYear_list.rds
 #
 # To-do:
 # 1. 
 ##########################################################################
 
-## 1. ----
-allCrimes_count <- readRDS("~outputs/30/30_allCrimes_count.rds")
+## 1a. ----
+allCrimes_count <- readRDS("~outputs/30/31_allCrimes_count.rds")
 # allCrimes_count <- allCrimes_df %>%
 #   group_by(city) %>%
 #   summarize(count = n()) %>%
@@ -29,12 +34,14 @@ gunIncident_summary <- gunIncident_count %>%
   mutate(prop = gun_count / all_crimes_count) %>% 
   arrange(desc(gun_count))
 
-gunIncidentsByCityPlot <- ggplot(gunIncident_summary,
-                           aes(x = reorder(city, gun_count), y = gun_count)) +
-  geom_bar(position = "dodge",
-           stat = "identity") +
-  coord_flip() +
-  plotTheme()
+## 1b. ----
+gunCount_byYear <-  guns_clean %>% 
+  group_by(city, state, year) %>% 
+  summarize(gun_count = n()) %>% 
+  arrange(desc(gun_count))
+
+gunCount_byYear_list <- split(gunCount_byYear,
+                              gunCount_byYear$city)
 
 
 ## 2. SF crime map ----
@@ -59,6 +66,16 @@ gunIncidentsByCityPlot <- ggplot(gunIncident_summary,
 #           inherit.aes = FALSE) +
 #   plotTheme()
 
-## 1. Export gunIncident_summary as rds ----
+## 1. Export allCrimes_count as rds ----
 # saveRDS(allCrimes_count,
-#         file = "~outputs/30/30_allCrimes_count.rds")
+#         file = "~outputs/30/31_allCrimes_count.rds")
+
+## 2. Export gunIncident_summary as rds ----
+# saveRDS(gunIncident_summary,
+#         file = "~outputs/30/31_gunIncident_summary.rds")
+
+## 3. Export gunCount_byYear as rds ----
+# saveRDS(gunCount_byYear,
+#         file = "~outputs/30/31_gunCount_byYear.rds")
+# saveRDS(gunCount_byYear_list,
+#         file = "~outputs/30/31_gunCount_byYear_list.rds")

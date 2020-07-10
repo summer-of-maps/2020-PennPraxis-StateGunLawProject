@@ -2,7 +2,12 @@
 title: "SGLP Working Draft"
 author: "Eugene Chong"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+    toc_depth: 5
 ---
 
 ```{r setup, include=FALSE}
@@ -95,13 +100,15 @@ Scores over time
 siegelSum <- readRDS("~outputs/20/20_siegelSum.RDS")
 ```
 
-```{r, fig.height = 14, fig.width = 16}
+```{r, fig.height = 20, fig.width = 13}
 ggplot(siegelSum,
        aes(x = year,
            y = score)) +
   geom_line(size = 1) +
-  facet_wrap(~ state, ncol = 10, scales = "free_x") +
+  # geom_point() +
+  facet_wrap(~ state, ncol = 5, scales = "free_x") +
   plotTheme() +
+  scale_x_continuous(breaks = seq(min(siegelSum$year), max(siegelSum$year), 5)) +
   labs(title = "Siegel Scores",
        x = "Year",
        y = "Score (sum of gun laws)") +
@@ -258,16 +265,18 @@ na_coords_summary %>%
 
 ##### Maps of each city  {.tabset}
 
+CHANGE THIS TO QUADRAT ANALYSIS MAPS
+
 ```{r, optipng='-o7', results='asis', echo = FALSE}
 # source("~scripts/31a - Map all crimes.R") 
 
-tmp <- list.files("~outputs/Plots/31a_gunCrimes",
-                  full.names = TRUE)
+tmp <- list.files("~outputs/Plots/31a_gunCrimes", 
+                  full.names = TRUE) 
 
 for (i in 1:length(tmp)) {
   cat("###### ",names(guns_list[i]),"\n")
   cat(paste0("![](", tmp[i], "){width=65%}"), "\n")
-  cat('\n\n')
+  cat('\n\n') 
 }
 ```
 
@@ -301,26 +310,26 @@ tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
 BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
 ```
 
-```{r, cache = FALSE}
+```{r, cache = FALSE, eval = FALSE}
 tmap::tmap_mode("view")
 
 tmap::qtm(tracts_crimeCounts$byCaveHull$`San Francisco`, title = "Concave hull of crimes")
 ```
 
-```{r, cache = FALSE}
+```{r, cache = FALSE, eval = FALSE}
 tmap::qtm(tracts_crimeCounts$byVexHull$`San Francisco`, title = "Convex hull of crimes")
 ```
 
-```{r, cache = FALSE}
+```{r, cache = FALSE, eval = FALSE}
 tmap::qtm(tracts_crimeCounts$byCounty$`San Francisco`, title = "County")
 ```
 
-```{r, cache = FALSE}
+```{r, cache = FALSE, eval = FALSE}
 tmap::qtm(tracts_crimeCounts$byPlace$`San Francisco`, title = "Census-designated place")
 ```
 
 ```{r}
-# source("~scripts/34 - Calculate Moran's I.R") 
+# source("~scripts/34 - Calculate Moran's I.R")  
 tracts_I <- readRDS("~outputs/30/34_tracts_I.rds")
 BGs_I <- readRDS("~outputs/30/34_BGs_I.rds")
 tracts_pop_I <- readRDS("~outputs/30/34_tracts_pop_I.rds")
@@ -434,7 +443,7 @@ I_wide <- I_tmp %>%
                 crime_BG = `crime_I_Block Group`,
                 crime_BG_p = `pval_crime_Block Group`,
                 pop_BG = `pop_I_Block Group`,
-                pop_BG_p = `pval_pop_Block Group`)
+                pop_BG_p = `pval_pop_Block Group`) 
 ```
 
 Below is a table showing Moran's I for crimes per 100 for census tracts and block groups for each study area _selected by the relevant Census-designated place_, raw crime counts, and population. We see a big range from 0 (essentially random gun crime distribution relative to population) to very high 
@@ -445,7 +454,7 @@ Questions:
 * How might we interpret a city that has a large difference in Moran's I between tracts and block groups (e.g. Kansas City)?
 
 ```{r}
-I_wide %>% 
+I_wide %>%  
   mutate(crime_tr_p = cell_spec(crime_tr_p,
                            "html",
                            background = ifelse(str_detect(crime_tr_p, ">"),
@@ -485,17 +494,85 @@ I_wide %>%
 ```
 
 
-##### Crimes by census tract for each city {.tabset}
+##### Crimes by block group for each city {.tabset}
 
 ```{r, optipng='-o7', results='asis', echo = FALSE}
 # source("~scripts/33a - Map census geographies by crime counts.R") 
 
-tmp <- list.files("~outputs/Plots/33a_tract_per100_maps/byPlace",
-                  full.names = TRUE)
+tmp <- list.files("~outputs/Plots/33a_BG_per100_maps/byCaveHull",
+                  full.names = TRUE) 
 
-for (i in 1:length(tmp)) {
+for (i in 1:length(tmp)) { 
   cat("###### ",names(guns_list[i]),"\n")
   cat(paste0("![](", tmp[i], "){width=65%}"), "\n")
   cat('\n\n')
+}
+```
+
+##### Siegel Scores, Gun Crime Count, and Moran's I by Year {.tabset}
+
+The plots below show the Moran's I (extent of spatial clustering), count of gun crimes, and Siegel Score for every city by year. The x-axis is aligned on each, so you can read straight down, but some of the cities with fewer years of data will look compressed horizontally.
+
+A note on **outliers:** I noticed last time that several cities (NYC, LA, SF, others) had Moran's Is of around 0, and this persisted even when looking at them year-by-year, despite visual evidence in the maps showing clear clustering (see map of San Francisco above, for example). This was due to outliers in the gun crimes / 100 stat (a few gun crimes in an area with low population lead to extremely high values). So, I filtered out the block groups every year that had values higher than the 99.5th percentile in each city. In LA, this had the effect of changing the Moran's I from 0 to around 0.55, a much more sensible value. The 99.5th percentile cut-off is arbitrary. Also, those block groups were filtered out rather than imputed, so they would be empty on a map.
+
+* **Boston:** Total gun crimes and clustering dropped over the last decade.
+
+* **Chicago:** clustering is steady over time, while total gun crimes have decreased. Siegel score has steadily risen since 1991.
+
+* **Denver:** Gun crimes and clustering seem to have increased. Crime data available from 2014.
+
+* **Detroit:** Decrease in gun crimes and clustering. Steady Siegel Score.
+
+* **Hartford:** Clustering has dipped, while both annual gun crimes and Siegel Score have risen.
+
+* **Indianapolis:** Gradual decline in clustering. Sudden drop in gun crimes (reporting change?). Little change to Siegel Score.
+
+* **Los Angeles:** Rising Siegel Score, little change to overall crimes or clustering.
+
+* **Louisville:** Sharp increase in crimes, little change to clustering and Siegel.
+
+* **Minneapolis:** Decrease in clustering, increase in crimes and Siegel Score.
+
+* **Nashville:** Decrease in clustering, increase in crimes.
+
+* **New York:** Decrease in crimes and increase in Siegel Score. Not change to clustering.
+
+* **Philly:** Decrease in crimes, maybe a slight increase in clustering, little change to Siegel Score.
+
+* **Portland:** Limited sample, but all three seem to have risen recently.
+
+* **San Francisco:** Increase in Siegel Score, but not much change to total crimes or clustering.
+
+* **St. Louis County:** Decrease in Siegel Score and icnrease in crimes. 
+
+* **Tucson:** Decrease in crimes and clustering.
+
+```{r, optipng='-o7', results='asis', echo = FALSE}
+# source("~scripts/34a -  Moran's I plots.R") 
+
+tmp <- list.files("~outputs/Plots/34a_siegel_gunCount_MoransI_plots",
+                  full.names = TRUE) 
+
+for (i in 1:length(tmp)) {
+  cat("###### ", names(guns_list[i]),"\n")
+  cat(paste0("![](", tmp[i], "){width=75%}"), "\n")
+  cat('\n\n')
+}
+```
+
+##### Cluster / Outlier maps {.tabset}
+
+These maps show high- and low-crime clusters, as well as areas with high- or low-crime compared to their neighbors.
+
+```{r, optipng='-o7', results='asis', echo = FALSE}
+# source("~scripts/34a -  Moran's I plots.R") 
+
+tmp <- list.files("~outputs/Plots/34a_BG_cluster_maps",
+                  full.names = TRUE) 
+
+for (i in 1:length(tmp)) {
+  cat("###### ", names(guns_list[i]),"\n")
+  cat(paste0("![](", tmp[i], "){width=100%}"), "\n")
+  cat('\n\n') 
 }
 ```

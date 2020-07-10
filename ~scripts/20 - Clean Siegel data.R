@@ -18,6 +18,9 @@ siegelSum <- siegel_raw %>%
   mutate(score = rowSums(.[3:136])) %>% 
   dplyr::select(state, year, score, everything())
 
+siegelSum_list <- split(siegelSum,
+                        siegelSum$state)
+
 ## 1. Export as RDS ----
 # saveRDS(siegelSum,
 #         "~outputs/20/20_siegelSum.RDS")

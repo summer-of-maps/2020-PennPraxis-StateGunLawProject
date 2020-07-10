@@ -13,11 +13,11 @@
 ##########################################################################
 
 ## 1. ----
-basemap_list <- map(guns_list_shp,
-                    ~ get_map(base_map_bb(.x),
+basemap_list <- map(BG_selection_list$byCaveHull,
+                    ~ get_stamenmap(base_map_bb(.x),
                               source = "stamen",
-                              maptype = "toner-background",
-                              color = "bw"))
+                              maptype = "terrain-lines",
+                              zoom = 12))
 
 l <- list(basemaps = basemap_list,
          cityNames = names(basemap_list),

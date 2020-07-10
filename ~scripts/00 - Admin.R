@@ -44,6 +44,7 @@ library(gridExtra)
 library(knitr)
 library(kableExtra)
 # library(wesanderson) # palettes
+library(cowplot) # for arranging plots
 
 # debugging
 library(rbenchmark) # time processing speed

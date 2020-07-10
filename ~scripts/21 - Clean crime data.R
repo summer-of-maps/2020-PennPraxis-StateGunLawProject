@@ -8,7 +8,7 @@
 #   (b) documenting cleaning steps for every city
 #       NB: For each city, I checked lon/lat ranges and clean_occur_date 
 #           and clean_report_date for sensible values for each
-#   (c) removing years with fewer than 1% of the total gun observations
+#   (c) removing years with very few observations
 # 4. Flattens the list into a dataframe
 # 5. Creates an sf version of the crime data in list form
 # 6. #5 above, but with each city's crimes split into nested dataframes for each year
@@ -46,9 +46,9 @@ guns_list$`Virginia Beach` <- read_csv(file.path(data_dir,
          reportdate = as.character(reportdate),
          occurdate = as.character(occurdate))
 
-## 3. ----
+## 3a. ----
 plan(multiprocess)
-# 3(a) - this takes a while
+# this takes a while
 guns_list <- future_map(guns_list,
                         ~ .x %>% 
                           mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
@@ -73,7 +73,7 @@ guns_list <- future_map(guns_list,
                                                lubridate::year(clean_report_date))),
                         .progress = TRUE)
 
-# 3(b)
+# 3b. ----
 ### Atlanta - looks fine
 
 ### Auburn - looks fine
@@ -249,10 +249,109 @@ guns_list$`Virginia Beach` <- guns_list$`Virginia Beach` %>%
          lat = ifelse(lat_tmp < 36., NA_character_, lat)) %>% 
   dplyr::select(-c(lat_tmp, lon_tmp))
 
+## 3c. ----
+### Atlanta
+guns_list$Atlanta <- guns_list$Atlanta %>% 
+  filter(year %!in% c(2006, 2008))
+
+### Auburn
+guns_list$Auburn <- guns_list$Auburn %>% 
+  filter(year %!in% c(2017))
+
+### Baltimore - looks fine
+
+### Baton Rouge - looks fine
+
+### Boston - looks fine
+
+### Chicago - looks fine
+
+### Cincinnati
+guns_list$Cincinnati <- guns_list$Cincinnati %>% 
+  filter(year %!in% c(2003, 2005))
+
+### Columbia - looks fine
+
+### Dallas - looks fine
+
+### Denver - looks fine
+
+### Detroit - crimes drop dramatically starting in 2017
+guns_list$Detroit <- guns_list$Detroit %>% 
+  filter(year %!in% c(2015, 2016))
+
+### Gainesville - looks fine
+
+### Hartford - looks fine
+
+### Indianapolis - looks fine. crimes cut in half in 2013
+
+### Kansas City - 2013 is much lower, and data is missing from 2014-2018
+
+### Lincoln 
+guns_list$Lincoln <- guns_list$Lincoln %>% 
+  filter(year %in% c(2013:2020))
+
+### Little Rock
+guns_list$`Little Rock` <- guns_list$`Little Rock` %>% 
+  filter(year %!in% c(2014))
+
+### Los Angeles - looks fine
+
+### Louisville - Note that 2003, first year, has much lower count
+guns_list$Louisville$year %>% table()
+guns_list$Louisville <- guns_list$Louisville %>% 
+  filter(year %in% c(2003:2020))
+
+### Madison 
+guns_list$Madison <- guns_list$Madison %>% 
+  filter(year %in% c(2005:2020))
+
+### Minneapolis - looks fine
+
+### Nashville
+guns_list$Nashville <- guns_list$Nashville %>% 
+  filter(year %in% c(2013:2020))
+
+### New York
+guns_list$`New York` <- guns_list$`New York` %>% 
+  filter(year %in% c(2006:2019))
+
+### Phoenix
+guns_list$Phoenix <- guns_list$Phoenix %>% 
+  filter(year %!in% c(2015))
+
+### Portland - looks fine
+
+### Raleigh - looks fine
+
+### Sacramento County
+guns_list$`Sacramento County` <- guns_list$`Sacramento County` %>% 
+  filter(year %in% c(2007:2019))
+
+### Saint Paul - looks fine
+
+### Salt Lake City - looks fine
+
+### San Francisco - looks fine
+
+### St Louis County
+guns_list$`St Louis County` <- guns_list$`St Louis County` %>% 
+  filter(year %in% c(2015:2019))
+
+### Tucson
+guns_list$Tucson <- guns_list$Tucson %>% 
+  filter(year %in% c(2009:2020))
+
+### Virginia Beach - one data point outside of Virginia Beach. Changed to NA
+guns_list$`Virginia Beach` <- guns_list$`Virginia Beach` %>% 
+  filter(year %in% c(2016:2020))
+
 ## 4. ----
 guns_clean <- bind_rows(guns_list)
 
 ## 5. ----
+plan(multiprocess)
 guns_list_shp <- future_map(guns_list,
                             ~ .x %>% 
                               filter(!is.na(lon),
