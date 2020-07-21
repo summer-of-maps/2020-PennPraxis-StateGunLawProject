@@ -65,20 +65,85 @@ Siegel_gunCount_MoransI_plots <- pmap(.l = list(BGs_per100_I_byYear_plots,
                                                            align = "v"))
 
 ## 3a. ----
-BG_cluster_maps <- map2(basemap_list,
-     BGs_per100_localI,
-     ~ ggmap(.x,
-             darken = 0.5) +
-       geom_sf(data = .y, aes(fill = factor(cluster,
-                                              levels = c("insignificant", "high-high", "high-low", "low-high", "low-low"))),
-               color = "gray",
-               inherit.aes = FALSE) + 
-       scale_fill_manual(name = "Local Clusters/Outliers",
-                         values = c("white", "#ca0020", "#f4a582", "#92c5de", "#0571b0"),
-                         limits = c("insignificant", "high-high", "high-low", "low-high", "low-low")) +
-       mapTheme() +
-       labs(title = "Gun Crime Clusters and Outliers",
-            subtitle = "Significant at p value < 0.05"))
+make_cluster_map <- function(x, y, z) {
+  
+  siegel <- siegelSum_list[[z[1,] %>% pull(state)]] %>% # get siegel score for plot label
+    filter(year == max(year)) %>% 
+    pull(score)
+  
+  siegel_max <- max(siegelSum$score)
+  siegel_min <- min(siegelSum$score)
+  
+  max_year <- max(z$year)
+  min_year <- min(z$year)
+  
+  tmp_summary <- y %>% 
+    st_drop_geometry() %>% 
+    group_by(cluster, .drop = FALSE) %>% 
+    summarize(count = n()) %>% 
+    mutate(prop = count / sum(count))
+  
+  insignificant <- tmp_summary %>% 
+    filter(cluster == "insignificant") %>% 
+    pull(count)
+  high_high <- tmp_summary %>% 
+    filter(cluster == "high-high") %>% 
+    pull(count)
+  high_low <- tmp_summary %>% 
+    filter(cluster == "high-low") %>% 
+    pull(count)
+  low_high <- tmp_summary %>% 
+    filter(cluster == "low-high") %>% 
+    pull(count)
+  low_low <- tmp_summary %>% 
+    filter(cluster == "low-low") %>% 
+    pull(count)
+  insignificant_prop <- tmp_summary %>% 
+    filter(cluster == "insignificant") %>% 
+    pull(prop)
+  high_high_prop <- tmp_summary %>% 
+    filter(cluster == "high-high") %>% 
+    pull(prop)
+  high_low_prop <- tmp_summary %>% 
+    filter(cluster == "high-low") %>% 
+    pull(prop)
+  low_high_prop <- tmp_summary %>% 
+    filter(cluster == "low-high") %>% 
+    pull(prop)
+  low_low_prop <- tmp_summary %>% 
+    filter(cluster == "low-low") %>% 
+    pull(prop)
+  
+  subtitle <- paste("Siegel Score: ", siegel, ". ",
+                    high_high, " high-high clusters (", 
+                   round(high_high_prop * 100, 0), "% of BGs) and ",
+                   high_low, " high-low clusters (",
+                   round(high_low_prop * 100, 0), "%)",
+                   sep = "")
+  
+  caption <- paste("Crime data from ", min_year,
+                   " to ", max_year, ". State Siegel Scores range from ",
+                   siegel_min, " to ", siegel_max, 
+                   sep = "")
+  
+  ggmap(x,
+        darken = 0.5) +
+    geom_sf(data = y, aes(fill = cluster),
+            color = "gray",
+            inherit.aes = FALSE) + 
+    scale_fill_manual(name = "Signif. Local Clusters/Outliers\np value < 0.05",
+                      values = c("white", "#ca0020", "#f4a582", "#92c5de", "#0571b0"),
+                      limits = c("insignificant", "high-high", "high-low", "low-high", "low-low")) +
+    mapTheme() +
+    labs(title = "Gun Crime Clusters and Outliers",
+         subtitle = subtitle,
+         caption = caption)
+} # function for the loop below
+
+BG_cluster_maps <- pmap(list(basemap_list,
+                        BGs_per100_localI,
+                        gunCount_byYear_list),
+                        make_cluster_map)
 
 ## 3b. ----
 BG_cluster_maps_byYear <- map2(basemap_list,
@@ -142,6 +207,6 @@ map2(BG_cluster_maps,
                                   "BG_cluster_map.png",
                                   sep = ""),
                  dpi = 72,
-                 nrow = 3,
-                 base_height = 4,
+                 # nrow = 3,
+                 base_height = 8,
                  base_width = 8))

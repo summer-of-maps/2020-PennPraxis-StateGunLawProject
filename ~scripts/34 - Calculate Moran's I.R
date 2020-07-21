@@ -79,7 +79,7 @@ BGs_per100_I_byYear <- future_map(BGs_crimeCounts_byYear,
                                                              style = "W")))
 
 ## 3a. ----
-BGs_per100_localI <- map(BGs_crimeCounts$byCaveHull,
+BGs_per100_localI <- future_map(BGs_crimeCounts$byCaveHull,
                          ~ find_localMoran(.x,
                                            var_name = "guns_per100",
                                            queen = TRUE,
@@ -104,9 +104,10 @@ BGs_per100_localI <- map(BGs_crimeCounts$byCaveHull,
                                                       significant == "Yes" & guns_per100_norm < 0 & Local_Morans_I_norm < 0 ~ "low-low",
                                                       significant == "Yes" & guns_per100_norm > 0 & Local_Morans_I_norm < 0 ~ "high-low",
                                                       significant == "Yes" & guns_per100_norm < 0 & Local_Morans_I_norm > 0 ~ "low-high",
-                                                      TRUE ~ NA_character_)) %>% 
+                                                      TRUE ~ NA_character_),
+                                  cluster = factor(cluster,
+                                                   levels = c("insignificant", "high-high", "high-low", "low-high", "low-low"))) %>% 
                            st_sf())
-
 
 ## 3b. ----
 BGs_per100_localI_byYear <- future_map(BGs_crimeCounts_byYear,

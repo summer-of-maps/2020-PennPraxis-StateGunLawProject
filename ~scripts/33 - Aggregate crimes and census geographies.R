@@ -41,7 +41,6 @@ tracts_crimeCounts <- map(tract_selection_list, # loop over the 4 sets of tracts
 
 ## 1b. ----
 # BG_selection_list <- readRDS("~outputs/20/22_BG_selection_list.rds")
-
 BGs_crimeCounts <- map(BG_selection_list, # loop over the 4 sets of BGs
                        .f = function(a)
                          map2(a, # loop over all cities and crimes for the cities

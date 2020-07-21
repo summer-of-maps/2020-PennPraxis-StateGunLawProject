@@ -21,11 +21,23 @@ knit_hooks$set(optipng = hook_optipng)
 
 # Admin
 
-Load packages
+Run scripts and load objects
 
 ```{r packages}
 source("~scripts/00 - Admin.R") 
 source("~scripts/01 - Utility Functions.R")
+source("~scripts/10 - Read Siegel Data.R")
+guns_df <- readRDS("~outputs/10/11_guns_df.rds")
+guns_clean <- readRDS("~outputs/20/21_guns_clean.rds")
+guns_list <- readRDS("~outputs/20/21_guns_list.rds")
+siegelSum <- readRDS("~outputs/20/20_siegelSum.RDS")
+guns_list_shp <- readRDS("~outputs/20/21_guns_list_shp.rds")
+guns_list_shp_byYear <- readRDS("~outputs/20/21_guns_list_shp_byYear.rds")
+source("~scripts/31 - Explore crime data.R")
+tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
+BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
+BG_selection_list <- readRDS("~outputs/20/22_BG_selection_list.rds")
+tract_selection_list <- readRDS("~outputs/20/22_tract_selection_list.rds")
 ```
 
 # Read Data
@@ -33,20 +45,20 @@ source("~scripts/01 - Utility Functions.R")
 ## Siegel data for all cities
 
 ```{r}
-source("~scripts/10 - Read Siegel Data.R")
+# source("~scripts/10 - Read Siegel Data.R")
 ```
 
 ## Gun incidents for all cities
 
 ```{r, eval = eval_state}
 # source("~scripts/11 - Read crime data.R")
-guns_df <- readRDS("~outputs/10/11_guns_df.rds")
+# guns_df <- readRDS("~outputs/10/11_guns_df.rds")
 ```
 
 ```{r}
 # source("~scripts/21 - Clean crime data.R")
-guns_clean <- readRDS("~outputs/20/21_guns_clean.rds")
-guns_list <- readRDS("~outputs/20/21_guns_list.rds")
+# guns_clean <- readRDS("~outputs/20/21_guns_clean.rds")
+# guns_list <- readRDS("~outputs/20/21_guns_list.rds")
 ```
 
 Sample of data for testing
@@ -93,11 +105,11 @@ And 50 sub-categories
 unique(siegel_raw$Sub.Category)
 ```
 
-Scores over time 
+### Scores over time 
 
 ```{r}
 # source("~scripts/20 - Clean Siegel data.R")
-siegelSum <- readRDS("~outputs/20/20_siegelSum.RDS")
+# siegelSum <- readRDS("~outputs/20/20_siegelSum.RDS")
 ```
 
 ```{r, fig.height = 20, fig.width = 13}
@@ -221,13 +233,13 @@ Data:
 
 ```{r}
 # source("~scripts/21 - Clean crime data.R")
-guns_list_shp <- readRDS("~outputs/20/21_guns_list_shp.rds")
+# guns_list_shp <- readRDS("~outputs/20/21_guns_list_shp.rds")
 ```
 
 Source script: 
 
 ```{r}
-source("~scripts/31 - Explore crime data.R")
+# source("~scripts/31 - Explore crime data.R")
 ```
 
 Crime counts by city
@@ -306,8 +318,8 @@ A concave or convex hull may better fit the data, though.
 
 ```{r}
 # source("~scripts/33 - Aggregate crimes and census geographies.R") 
-tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
-BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
+# tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
+# BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
 ```
 
 ```{r, cache = FALSE, eval = FALSE}
@@ -543,7 +555,7 @@ A note on **outliers:** I noticed last time that several cities (NYC, LA, SF, ot
 
 * **San Francisco:** Increase in Siegel Score, but not much change to total crimes or clustering.
 
-* **St. Louis County:** Decrease in Siegel Score and icnrease in crimes. 
+* **St. Louis County:** Decrease in Siegel Score and increase in crimes. 
 
 * **Tucson:** Decrease in crimes and clustering.
 
@@ -562,7 +574,22 @@ for (i in 1:length(tmp)) {
 
 ##### Cluster / Outlier maps {.tabset}
 
-These maps show high- and low-crime clusters, as well as areas with high- or low-crime compared to their neighbors.
+These maps show high- and low-crime clusters (crimes per 100), as well as areas with high- or low-crime compared to their neighbors. Areas in white not shown to have a statistically significant relationship with their neighbors.
+
+**Notes:**
+
+* I calculated this for every year as well, so we can see how clusters move, but not sure how to visualize it. A gif, maybe?
+
+* Next step is to compare demographics across the categories, or at least the hotspots vs. the whole city.
+
+* Intuitively, these maps make sense. At least for the cities I know, the hot spot locations are not surprising.
+
+* Generally, there are far more hotspots than there are cold spots. Makes sense, a long right tail for gun crimes per capita.
+
+* Some edge effects, it seems, particularly with the "low crime" areas. See Baltimore and Chicago for example. For spatial weights calculation, weights are standardized over all links to the block group, so block groups on the edge naturally have fewer neighbors that are weighed more highly.
+
+* Very few "outliers", where the block group is very different from their neighbor.
+
 
 ```{r, optipng='-o7', results='asis', echo = FALSE}
 # source("~scripts/34a -  Moran's I plots.R") 
@@ -570,9 +597,28 @@ These maps show high- and low-crime clusters, as well as areas with high- or low
 tmp <- list.files("~outputs/Plots/34a_BG_cluster_maps",
                   full.names = TRUE) 
 
-for (i in 1:length(tmp)) {
-  cat("###### ", names(guns_list[i]),"\n")
+for (i in 1:length(tmp)) { 
+  cat("###### ", names(guns_list[i]),"\n") 
   cat(paste0("![](", tmp[i], "){width=100%}"), "\n")
   cat('\n\n') 
 }
 ```
+
+# Spatial Scale Analysis and Selection
+
+To this point, we've aggregated gun crimes to the census tracts and block group level, because they are readily available for each city and are associated with demographic/socio-economic data that will provide useful context for analyzing gun violence rates. However, they have the disadvantage of 1) varying considerably in size and 2) not really reflecting the underlying spatial phenomenon. Maybe gun crimes sort into block-group-sized areas, but it'd be advantageous to measure it at many different levels, ranging from the individual block or street up to entire neighborhoods or larger. Ideally, we'd choose a spatial unit of aggregation that was small enough to reflect the distribution of the underlying gun crime data while being large enough to fit with other existing datasets without requiring too much areal interpolation. Additionally, we would expect that the size of the spatial unit would vary across cities, which vary in both the distribution and reporting quality of their crime data.
+
+One method proposed for selecting the "most appropriate" spatial scale comes from this paper: [Identifying the appropriate spatial resolution for the analysis of crime patterns, 2019](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0218324).
+
+The authors define the most appropriate scale as follows:
+
+> For these reasons, choosing the most appropriate spatial unit is very important. As [Oberwittler D, Wikström POH] (p 39) put it: “smaller is generally better”, but spatial units that are too small are problematic also. So what is an ‘appropriate’ spatial scale? Here, we define the most appropriate scale as that which is as large as possible without causing the underlying spatial units to become heterogeneous with respect to the phenomena under study. The appropriate scale, therefore, balances the theoretical and methodological benefits of working with small units against the difficulty in obtaining small-scale data and the small number problems that can emerge. Here the focus is on crime patterns, specifically, but the proposed method has applicability to other spatial phenomena.
+
+They then propose a method for determining the appropriate scale. First, they select two sets of point data driven by the same spatial process (in their case, two consecutive years of data for certain types of crimes in Vancouver). Then, they iteratively overlay sets of grid cells on their study area with progressively smaller sizes. With each iteration, they count the number of crimes from the two data sets that occurred in the grid cells and compare the similarity of spatial distribution/clustering between them using a measure called [Andresen's S](https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0218324.s002&type=supplementary). Finally, they plot the number of cells on the x-axis and _S_ on the y-axis. They suggest choosing the number of grid cells with the highest S, and, in the case _S_ plateaus rather than showing a single peak, choosing the number of grid cells at the elbow (much like when choosing a _K_ for _K-means_ cluster analysis). 
+
+`r include_graphics("https://journals.plos.org/plosone/article/figure/image?size=large&id=10.1371/journal.pone.0218324.g008")`
+
+
+
+
+
