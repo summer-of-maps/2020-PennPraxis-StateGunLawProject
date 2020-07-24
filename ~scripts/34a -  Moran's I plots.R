@@ -148,9 +148,11 @@ BG_cluster_maps <- pmap(list(basemap_list,
                         darken = 0.3)
 
 ## 3b. ----
-# basemap_list <- readRDS("~outputs/30/31a_basemap_list.rds")
-# BGs_per100_localI_byYear <- readRDS("~outputs/30/34_BGs_per100_localI_byYear.rds")
-# years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
+basemap_list <- readRDS("~outputs/30/31a_basemap_list.rds")
+BGs_per100_localI_byYear <- readRDS("~outputs/30/34_BGs_per100_localI_byYear.rds")
+years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
+gunCount_byYear_list <- readRDS("~outputs/30/31_gunCount_byYear_list.rds")
+
 
 BG_cluster_maps_byYear <- vector("list", length(BGs_per100_localI_byYear)) %>% 
   set_names(names(BGs_per100_localI_byYear))
@@ -169,7 +171,7 @@ for (city in seq_len(length(BG_cluster_maps_byYear))) {
     
     data_tmp <- BGs_per100_localI_byYear[[city]][[year]]
     year_tmp <- years_byCity[[city]][[year]]
-    siegel_tmp <- siegelSum_list[[city]][year,]$score
+    siegel_tmp <- siegelSum_list[[gunCount_byYear_list[[city]][1,]$state]][year,]$score
     
     BG_cluster_maps_byYear[[city]][[year]] <- ggmap(
       basemap_tmp,
@@ -274,13 +276,16 @@ for (city in seq_len(length(BG_cluster_maps_byYear))) {
 }
 
 ## Make GIFs
+
+years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
+
 tmp_folders <- list.files(path = "~outputs/Plots/34a_BG_cluster_maps_byYear",
                           full.names = TRUE)[2:35]
 
 # run piece-by-piece (4 or 5 at a time)
 # running whole loop stalls R
-for (city in seq_len(length(BG_cluster_maps_byYear))[28:34]) {
-  print(names(BG_cluster_maps_byYear)[city])
+for (city in seq_len(length(years_byCity))[34]) {
+  print(names(years_byCity)[city])
   
   tmp_files <- list.files(path = tmp_folders[city],
                           full.names = TRUE)
@@ -292,7 +297,7 @@ for (city in seq_len(length(BG_cluster_maps_byYear))[28:34]) {
   
   image_write(tmp_animation,
               paste0("~outputs/Plots/34a_BG_cluster_maps_byYear/~gifs/",
-                     names(BG_cluster_maps_byYear)[city],
+                     names(years_byCity)[city],
                      "_BG_per100_byYear.gif"))
   rm(tmp_animation)
   
