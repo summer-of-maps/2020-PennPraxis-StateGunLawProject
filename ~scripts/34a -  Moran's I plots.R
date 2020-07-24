@@ -15,7 +15,7 @@
 ##########################################################################
 
 ## 1. ----
-# BGs_per100_I_byYear <- readRDS("~outputs/30/33_BGs_crimeCounts_byYear.rds")
+# BGs_per100_I_byYear <- readRDS("~outputs/30/34_BGs_per100_I_byYear.rds")
 BGs_per100_I_byYear_list <- map(BGs_per100_I_byYear,
                 function (city)
                   map_dfr(city,
@@ -65,7 +65,7 @@ Siegel_gunCount_MoransI_plots <- pmap(.l = list(BGs_per100_I_byYear_plots,
                                                            align = "v"))
 
 ## 3a. ----
-make_cluster_map <- function(x, y, z) {
+make_cluster_map <- function(x, y, z, darken = 0.0) {
   
   siegel <- siegelSum_list[[z[1,] %>% pull(state)]] %>% # get siegel score for plot label
     filter(year == max(year)) %>% 
@@ -127,7 +127,8 @@ make_cluster_map <- function(x, y, z) {
                    sep = "")
   
   ggmap(x,
-        darken = 0.5) +
+        darken = darken
+        ) +
     geom_sf(data = y, aes(fill = cluster),
             color = "gray",
             inherit.aes = FALSE) + 
@@ -143,26 +144,54 @@ make_cluster_map <- function(x, y, z) {
 BG_cluster_maps <- pmap(list(basemap_list,
                         BGs_per100_localI,
                         gunCount_byYear_list),
-                        make_cluster_map)
+                        make_cluster_map,
+                        darken = 0.3)
 
 ## 3b. ----
-BG_cluster_maps_byYear <- map2(basemap_list,
-                               BGs_per100_localI_byYear,
-                               function(basemap, city) 
-                                 map(city,
-                                     function(year) 
-                                       ggmap(basemap,
-                                             darken = 0.5) +
-                                       geom_sf(data = year, aes(fill = factor(cluster,
-                                                                              levels = c("insignificant", "high-high", "high-low", "low-high", "low-low"))),
-                                               color = "gray",
-                                               inherit.aes = FALSE) +
-                                       scale_fill_manual(name = "Local Clusters/Outliers",
-                                                         values = c("white", "#ca0020", "#f4a582", "#92c5de", "#0571b0"),
-                                                         limits = c("insignificant", "high-high", "high-low", "low-high", "low-low")) +
-                                       mapTheme() +
-                                       labs(title = "Gun Crime Clusters and Outliers",
-                                            subtitle = "Significant at p value < 0.05")))
+# basemap_list <- readRDS("~outputs/30/31a_basemap_list.rds")
+# BGs_per100_localI_byYear <- readRDS("~outputs/30/34_BGs_per100_localI_byYear.rds")
+# years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
+
+BG_cluster_maps_byYear <- vector("list", length(BGs_per100_localI_byYear)) %>% 
+  set_names(names(BGs_per100_localI_byYear))
+
+for (city in seq_len(length(BG_cluster_maps_byYear))) {
+  print(names(BG_cluster_maps_byYear)[city])
+  
+  BG_cluster_maps_byYear[[city]] <- vector("list", length(years_byCity[[city]])) %>% 
+    set_names(names(years_byCity[[city]]))
+  
+  basemap_tmp <- basemap_list[[city]]
+  siegel_max <- max(siegelSum$score)
+  siegel_min <- min(siegelSum$score)
+  
+  for (year in seq_len(length(BG_cluster_maps_byYear[[city]]))) {
+    
+    data_tmp <- BGs_per100_localI_byYear[[city]][[year]]
+    year_tmp <- years_byCity[[city]][[year]]
+    siegel_tmp <- siegelSum_list[[city]][year,]$score
+    
+    BG_cluster_maps_byYear[[city]][[year]] <- ggmap(
+      basemap_tmp,
+      dark = 0.3) +
+      geom_sf(data = data_tmp,
+              aes(fill = factor(cluster,
+                                levels = c("insignificant", "high-high", "high-low", "low-high", "low-low"))),
+              color = "gray",
+              inherit.aes = FALSE) +
+      scale_fill_manual(name = "Local Clusters/Outliers",
+                        values = c("white", "#ca0020", "#f4a582", "#92c5de", "#0571b0"),
+                        limits = c("insignificant", "high-high", "high-low", "low-high", "low-low")) +
+      mapTheme() +
+      labs(title = paste0(names(BG_cluster_maps_byYear)[city], ": Gun Crime Clusters and Outliers"),
+           subtitle = paste0(year_tmp, ". Siegel Score: ", siegel_tmp),
+           caption = paste("State Siegel Scores range from ",
+                           siegel_min, " to ", siegel_max, 
+                           sep = ""))
+      
+  }
+  
+}
 
 # blah <- BGs_per100_localI_byYear$Atlanta %>% bind_rows(.id = "year")
 # 
@@ -199,7 +228,7 @@ map2(Siegel_gunCount_MoransI_plots,
                  base_width = 8))
 
 ## 3a. Export as png ----
-map2(BG_cluster_maps,
+walk2(BG_cluster_maps,
      names(BG_cluster_maps),
      ~ save_plot(plot = .x,
                  filename = paste("~outputs/Plots/34a_BG_cluster_maps/34a_",
@@ -210,3 +239,61 @@ map2(BG_cluster_maps,
                  # nrow = 3,
                  base_height = 8,
                  base_width = 8))
+
+## 3b. Export as png ----
+
+# create directories for each city
+# walk(paste0("~outputs/Plots/34a_BG_cluster_maps_byYear/",
+#             names(BG_cluster_maps_byYear)),
+#      dir.create)
+
+for (city in seq_len(length(BG_cluster_maps_byYear))) {
+  print(names(BG_cluster_maps_byYear)[city])
+  
+  for (year in seq_len(length(years_byCity[[city]]))) {
+    print(years_byCity[[city]][[year]])
+    
+    ggsave(plot = BG_cluster_maps_byYear[[city]][[year]],
+           filename = paste("~outputs/Plots/34a_BG_cluster_maps_byYear/",
+                            names(BG_cluster_maps_byYear)[city],
+                            "/34a_",
+                            years_byCity[[city]][[year]],
+                            "_BG_cluster_map_byYear.png",
+                            # geoType,
+                            # ".png",
+                            sep = ""),
+           device = "png",
+           units = "in",
+           dpi = 144,
+           width = 7,
+           height = 7)
+    
+  }
+  
+  
+}
+
+## Make GIFs
+tmp_folders <- list.files(path = "~outputs/Plots/34a_BG_cluster_maps_byYear",
+                          full.names = TRUE)[2:35]
+
+# run piece-by-piece (4 or 5 at a time)
+# running whole loop stalls R
+for (city in seq_len(length(BG_cluster_maps_byYear))[28:34]) {
+  print(names(BG_cluster_maps_byYear)[city])
+  
+  tmp_files <- list.files(path = tmp_folders[city],
+                          full.names = TRUE)
+  
+  tmp_animation <- map(tmp_files,
+                       image_read) %>% 
+    image_join() %>% 
+    image_animate(fps = 0.5)
+  
+  image_write(tmp_animation,
+              paste0("~outputs/Plots/34a_BG_cluster_maps_byYear/~gifs/",
+                     names(BG_cluster_maps_byYear)[city],
+                     "_BG_per100_byYear.gif"))
+  rm(tmp_animation)
+  
+}

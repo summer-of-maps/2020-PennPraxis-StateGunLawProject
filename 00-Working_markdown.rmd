@@ -10,20 +10,19 @@ output:
     toc_depth: 5
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo = FALSE}
 library(knitr)
 cache_state = TRUE
 eval_state = FALSE # use this for testing chunks that should/should not be run in the final knit doc
 
 opts_chunk$set(echo = TRUE, cache = cache_state, message = FALSE)
-knit_hooks$set(optipng = hook_optipng)
 ```
 
 # Admin
 
 Run scripts and load objects
 
-```{r packages}
+```{r packages, warning=FALSE}
 source("~scripts/00 - Admin.R") 
 source("~scripts/01 - Utility Functions.R")
 source("~scripts/10 - Read Siegel Data.R")
@@ -251,7 +250,8 @@ gunIncident_summary %>%
   kable_styling()
 ```
 
-```{r, optipng='-o7', fig.height=6}
+```{r, fig.height=6}
+gunIncidentsByCityPlot <- readRDS("~outputs/30/31c_gunIncidentsByCityPlot.rds")
 gunIncidentsByCityPlot
 ```
 
@@ -279,7 +279,7 @@ na_coords_summary %>%
 
 CHANGE THIS TO QUADRAT ANALYSIS MAPS
 
-```{r, optipng='-o7', results='asis', echo = FALSE}
+```{r, results='asis', echo = FALSE}
 # source("~scripts/31a - Map all crimes.R") 
 
 tmp <- list.files("~outputs/Plots/31a_gunCrimes", 
@@ -317,7 +317,7 @@ A concave or convex hull may better fit the data, though.
 * Block Groups selected via the same criteria
 
 ```{r}
-# source("~scripts/33 - Aggregate crimes and census geographies.R") 
+# source("~scripts/33 - Aggregate crimes and geographies.R") 
 # tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
 # BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
 ```
@@ -508,7 +508,7 @@ I_wide %>%
 
 ##### Crimes by block group for each city {.tabset}
 
-```{r, optipng='-o7', results='asis', echo = FALSE}
+```{r, results='asis', echo = FALSE}
 # source("~scripts/33a - Map census geographies by crime counts.R") 
 
 tmp <- list.files("~outputs/Plots/33a_BG_per100_maps/byCaveHull",
@@ -559,7 +559,7 @@ A note on **outliers:** I noticed last time that several cities (NYC, LA, SF, ot
 
 * **Tucson:** Decrease in crimes and clustering.
 
-```{r, optipng='-o7', results='asis', echo = FALSE}
+```{r,  results='asis', echo = FALSE}
 # source("~scripts/34a -  Moran's I plots.R") 
 
 tmp <- list.files("~outputs/Plots/34a_siegel_gunCount_MoransI_plots",
@@ -591,7 +591,7 @@ These maps show high- and low-crime clusters (crimes per 100), as well as areas 
 * Very few "outliers", where the block group is very different from their neighbor.
 
 
-```{r, optipng='-o7', results='asis', echo = FALSE}
+```{r, results='asis', echo = FALSE}
 # source("~scripts/34a -  Moran's I plots.R") 
 
 tmp <- list.files("~outputs/Plots/34a_BG_cluster_maps",
@@ -604,7 +604,144 @@ for (i in 1:length(tmp)) {
 }
 ```
 
+#### Hotspot demographic and socio-economic variables
+
+```{r}
+BGs_per100_localI_census <- readRDS("~outputs/30/34_BGs_per100_localI_census.rds")
+
+BGs_per100_localI_census_tmp <- map(
+  BGs_per100_localI_census,
+  ~ .x %>% 
+    st_drop_geometry() %>% 
+    mutate(hotspot = ifelse(str_detect(cluster, "high"),
+                            "Yes",
+                            "No"),
+           majorityMinority_tmp = ifelse(majorityMinority == "Yes",
+                                         1,
+                                         0)) %>% 
+    group_by(hotspot) %>% 
+    summarize(Hotspots = n(),
+              MdHHInc_weighted = round(weighted.mean(MdHHInc, TotPop, na.rm = TRUE), 0),
+              Age_weighted = round(weighted.mean(MdAge, TotPop, na.rm = TRUE), 1),
+              White_pct_weighted = round(weighted.mean(White_pct, TotPop, na.rm = TRUE), 2),
+              Black_pct_weighted = round(weighted.mean(Black_pct, TotPop, na.rm = TRUE), 2),
+              TotPop = sum(TotPop, na.rm = TRUE),
+              .groups = "drop") %>% 
+    arrange(desc(hotspot)))
+
+
+```
+
+```{r} 
+
+num_rows <- map(1:length(names(BGs_per100_localI_census_tmp)), 
+                ~ nrow(BGs_per100_localI_census_tmp[[.x]])) %>% 
+                  unlist()
+
+BGs_per100_localI_census_tmp %>%
+  bind_rows() %>% 
+  # arrange(Species)  %>%  # same order as table results  
+  # select(-Species)  %>%
+  kable("html",
+        caption = "Weighted averages by Moran's I hotspots",
+        # align = "",
+        col.names = c("Hotspot?",
+                      "# block groups",
+                      "Med. HH Inc.",
+                      "Med. Age",
+                      "White %",
+                      "Black %",
+                      "Total Pop.")
+        ) %>%
+  kable_styling(full_width = F,
+                fixed_thead = T) %>%
+  group_rows(index = setNames(num_rows, names(BGs_per100_localI_census_tmp)),
+             label_row_css = "background-color: #666; color: #fff;") 
+
+
+```
+
+##### Change in crimes over time {.tabset}
+
+```{r,  results='asis', echo = FALSE}
+# source("~scripts/34a -  Moran's I plots.R") 
+
+tmp <- list.files("~outputs/Plots/33a_BG_per100_byYear_maps/~gifs",
+                  full.names = TRUE) 
+tmp2 <- list.files("~outputs/Plots/35a_BG_crimeChange_maps",
+                  full.names = TRUE) 
+
+for (i in 1:length(tmp)) { 
+  cat("###### ", names(guns_list[i]),"\n") 
+  # cat(paste0("![](", tmp[i], "){width=100%}"))
+  cat(paste0("![](", tmp2[i], "){width=80%}"), "\n")
+  cat('\n\n') 
+}
+```
+
+#### Rise in gun crimes
+
+```{r}
+BGs_crimeChange <- readRDS("~outputs/30/35_BGs_crimeChange.rds")
+
+BGs_crimeChange_tmp <- map2(
+  BGs_crimeChange,
+  BGs_per100_localI_census,
+  ~ .x %>% 
+    left_join(.y,
+              by = "GEOID") %>% 
+    # st_drop_geometry() %>% 
+    mutate(increase = ifelse(str_detect(CrimeIncrease, "No"),
+                            "No",
+                            CrimeIncrease),
+           majorityMinority_tmp = ifelse(majorityMinority == "Yes",
+                                         1,
+                                         0)) %>% 
+    group_by(increase) %>% 
+    summarize(Increases = n(),
+              MdHHInc_weighted = round(weighted.mean(MdHHInc, TotPop, na.rm = TRUE), 0),
+              Age_weighted = round(weighted.mean(MdAge, TotPop, na.rm = TRUE), 1),
+              White_pct_weighted = round(weighted.mean(White_pct, TotPop, na.rm = TRUE), 2),
+              Black_pct_weighted = round(weighted.mean(Black_pct, TotPop, na.rm = TRUE), 2),
+              TotPop = sum(TotPop, na.rm = TRUE),
+              .groups = "drop") %>% 
+    arrange(desc(increase)))
+
+
+```
+
+```{r}
+
+num_rows <- map(1:length(names(BGs_crimeChange_tmp)), 
+                ~ nrow(BGs_crimeChange_tmp[[.x]])) %>% 
+                  unlist()
+
+BGs_crimeChange_tmp %>%
+  bind_rows() %>% 
+  # arrange(Species)  %>%  # same order as table results  
+  # select(-Species)  %>%
+  kable("html",
+        caption = "Block groups where gun crimes increased",
+        align = "l",
+        col.names = c("Increase in gun crimes?",
+                      "# block groups",
+                      "Med. HH Inc.",
+                      "Med. Age",
+                      "White %",
+                      "Black %",
+                      "Total Pop.")
+        ) %>%
+  kable_styling(full_width = F) %>%
+  group_rows(index = setNames(num_rows, names(BGs_per100_localI_census_tmp)),
+             label_row_css = "background-color: #666; color: #fff;") 
+
+
+```
+
+
 # Spatial Scale Analysis and Selection
+
+**FILL IN LATER**
 
 To this point, we've aggregated gun crimes to the census tracts and block group level, because they are readily available for each city and are associated with demographic/socio-economic data that will provide useful context for analyzing gun violence rates. However, they have the disadvantage of 1) varying considerably in size and 2) not really reflecting the underlying spatial phenomenon. Maybe gun crimes sort into block-group-sized areas, but it'd be advantageous to measure it at many different levels, ranging from the individual block or street up to entire neighborhoods or larger. Ideally, we'd choose a spatial unit of aggregation that was small enough to reflect the distribution of the underlying gun crime data while being large enough to fit with other existing datasets without requiring too much areal interpolation. Additionally, we would expect that the size of the spatial unit would vary across cities, which vary in both the distribution and reporting quality of their crime data.
 
@@ -617,6 +754,7 @@ The authors define the most appropriate scale as follows:
 They then propose a method for determining the appropriate scale. First, they select two sets of point data driven by the same spatial process (in their case, two consecutive years of data for certain types of crimes in Vancouver). Then, they iteratively overlay sets of grid cells on their study area with progressively smaller sizes. With each iteration, they count the number of crimes from the two data sets that occurred in the grid cells and compare the similarity of spatial distribution/clustering between them using a measure called [Andresen's S](https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0218324.s002&type=supplementary). Finally, they plot the number of cells on the x-axis and _S_ on the y-axis. They suggest choosing the number of grid cells with the highest S, and, in the case _S_ plateaus rather than showing a single peak, choosing the number of grid cells at the elbow (much like when choosing a _K_ for _K-means_ cluster analysis). 
 
 `r include_graphics("https://journals.plos.org/plosone/article/figure/image?size=large&id=10.1371/journal.pone.0218324.g008")`
+
 
 
 

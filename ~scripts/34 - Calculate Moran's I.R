@@ -8,6 +8,7 @@
 #   Reference: https://rpubs.com/quarcs-lab/spatial-autocorrelation
 #   a. Overall
 #   b. By Year
+# 4. Joins Moran's I tables with census variables dataframe
 #
 # Exports: 
 # 1a. tracts_I as 34_tracts_I.rds
@@ -15,9 +16,10 @@
 # 2. BGs_per100_I_byYear as 34_BGs_per100_I_byYear.rds
 # 3a. BGs_per100_localI as 34_BGs_per100_localI.rds
 # 3b. BGs_per100_localI_byYear as 34_BGs_per100_localI_byYear.rds
+# 4. BGs_per100_localI_census as 34_BGs_per100_localI_census.rds
 #
 # To-do:
-# 1. Calculate by time period
+# 1. 
 ##########################################################################
 
 # Source: https://crd150.github.io/lab5.html
@@ -139,6 +141,21 @@ BGs_per100_localI_byYear <- future_map(BGs_crimeCounts_byYear,
                                                                                TRUE ~ NA_character_)) %>% 
                                                     st_sf()))
 
+## 4. ----
+BGs_per100_localI <- readRDS("~outputs/30/34_BGs_per100_localI.rds")
+allState_censusDat_BGs <- readRDS("~outputs/20/22_allState_censusDat_BGs.rds")
+
+BGs_per100_localI_census <- map2(
+  BGs_per100_localI,
+  allState_censusDat_BGs,
+  ~ .x %>% 
+    dplyr::select(-c(NAME, variable, pop)) %>% 
+    left_join(.y,
+              by = "GEOID")
+  
+)
+
+
 ## 1a. Export as rds ----
 # saveRDS(tracts_I,
 #         file = "~outputs/30/34_tracts_I.rds")
@@ -166,3 +183,7 @@ BGs_per100_localI_byYear <- future_map(BGs_crimeCounts_byYear,
 ## 3b. Export as rds ----
 # saveRDS(BGs_per100_localI_byYear,
 #         file = "~outputs/30/34_BGs_per100_localI_byYear.rds")
+
+## 4. Export as rds ----
+# saveRDS(BGs_per100_localI_census,
+#         "~outputs/30/34_BGs_per100_localI_census.rds")

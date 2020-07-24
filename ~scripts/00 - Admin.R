@@ -34,7 +34,7 @@ library(concaveman)
 library(sp)
 library(spdep)
 library(raster)
-# library(stars)
+library(stars)
 library(sppt) # Andresen's S used in MSEA function
 library(GISTools)
 library(hydroGOF) # RMSE function used in the MSEA function
@@ -50,9 +50,15 @@ library(knitr)
 library(kableExtra)
 # library(wesanderson) # palettes
 library(cowplot) # for arranging plots
+library(magick) # make GIFs
+
 
 # debugging
 library(rbenchmark) # time processing speed
+
+# modeling
+library(tidymodels)
+
 
 ## 2. ----
 # (a)

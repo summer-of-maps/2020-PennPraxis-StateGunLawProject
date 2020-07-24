@@ -1,14 +1,14 @@
-##########################################################################
-# This script:
-# 1. Reads in the raw crimes data
-# 2. Filters for only the gun crimes
-#
-# Exports: 
-# 1. gun_crimes_df as 11_gun_crimes_df.rds
-# 
-# To-do:
-#
-##########################################################################
+  ##########################################################################
+  # This script:
+  # 1. Reads in the raw crimes data
+  # 2. Filters for only the gun crimes
+  #
+  # Exports: 
+  # 1. gun_crimes_df as 11_gun_crimes_df.rds
+  # 
+  # To-do:
+  #
+  ##########################################################################
 
 ## 1-2. ----
 # guns_df <- vroom(file.path(data_dir, "Full_City_Dataset/alldatahierarchies.csv"),
@@ -26,3 +26,13 @@ guns_df <- allCrimes_df %>%
 ## 1. Export as rds ----
 # saveRDS(guns_df,
 #         "~outputs/10/11_guns_df.rds")
+
+allCrimes_df %>%
+  filter(city == "Chicago",
+         weapgun == 1) %>%
+  nrow
+
+allCrimes_df %>%
+  filter(city == "Chicago",
+         adagun == 1) %>%
+  nrow

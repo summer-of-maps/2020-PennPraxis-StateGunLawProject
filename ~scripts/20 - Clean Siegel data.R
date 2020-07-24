@@ -10,6 +10,7 @@
 ##########################################################################
 
 ## 1. ----
+# siegelSum <- readRDS("~outputs/20/20_siegelSum.RDS")
 siegelSum <- siegel_raw %>% 
   dplyr::select(1:4) %>% 
   mutate(exist = as.numeric(exist)) %>% 

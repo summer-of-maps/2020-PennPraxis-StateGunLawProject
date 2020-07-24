@@ -12,10 +12,12 @@
 #   b. Convex hull of gun crime observations
 #   c. All BGs in any county with at least 1 gun crime observation
 #   d. Census-designated places matching the city/county name
+# 3. Clean census variables
 #
 # Exports: 
 # 1. tract_selection_list: a list containing 1a-1d above.
 # 2. BG_selection_list: a list containing 2a-2d above.
+# 3. allState_censusDat_BGs as 22_allState_censusDat_BGs.rds
 # 
 # To-do:
 # 1. 
@@ -111,10 +113,31 @@ BG_selection_list <- list(byCaveHull = BGs_byCaveHull,
                           byCounty = BGs_byCounty,
                           byPlace = BGs_byPlace)
 
+## 3. ----
+allState_censusDat_BGs_raw <- readRDS("~outputs/10/12_allState_censusDat_BGs_raw.rds")
+
+allState_censusDat_BGs <- map2(
+  allState_censusDat_BGs_raw,
+  BG_selection_list$byCaveHull,
+  ~ .x %>% 
+    filter(.x$GEOID %in% .y$GEOID) %>% 
+    dplyr::select(-c(NAME, Hisp_Pop, CollGrad, EduPop)) %>% 
+    mutate(MdHHInc_ntile = ntile(MdHHInc, 99),
+           MdAge_ntile = ntile(MdAge, 99),
+           White_pct = White_Pop / TotPop,
+           White_pct_ntile = ntile(White_pct, 99),
+           Black_pct = Black_Pop / TotPop,
+           Black_pct_ntile = ntile(Black_pct, 99),
+           majorityMinority = ifelse(White_pct < 0.5, "Yes", "No")))
+
 ## 1. Export as rds ----
 # saveRDS(tract_selection_list,
 #         "~outputs/20/22_tract_selection_list.rds")
 
-## 1. Export as rds ----
+## 2. Export as rds ----
 # saveRDS(BG_selection_list,
 #         "~outputs/20/22_BG_selection_list.rds")
+
+## 3. Export as rds ----
+# saveRDS(allState_censusDat_BGs,
+#         "~outputs/20/22_allState_censusDat_BGs.rds")

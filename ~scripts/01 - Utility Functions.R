@@ -20,6 +20,8 @@
 # 8. align_plots_diffAxes() and plot_grid_diffAxes(): modifies native `cowplot` functions to 
 #     allow alignment of grobs by x- or y-axis with different limits. See:
 #     https://stackoverflow.com/questions/57392541/extend-axis-limits-without-plotting-in-order-to-align-two-plots-by-x-unit
+# 9. rename_census_cols(): rename census variable ID columns with a vector of names and 
+#   optionally drop the margin of error columns
 #
 # To-do:
 # 1. 
@@ -329,4 +331,32 @@ plot_grid_diffAxes <- function (..., plotlist = NULL, align = c("none", "h", "v"
     }
   }
   p
+}
+
+## 9. ----
+rename_census_cols <- function(x,
+                               vars,
+                               names,
+                               drop_MOE = TRUE # drop margin of error?
+){
+  
+  estimate <- paste(vars, "E", sep = "")
+  MOE <- paste(vars, "M", sep = "")
+  
+  if(drop_MOE == TRUE | drop_MOE == T) {
+    
+    output <- x %>% 
+      rename_at(vars(estimate), 
+                ~ names) %>% 
+      dplyr::select(-all_of(MOE))
+    
+  } else if (missing(drop_MOE) | drop_MOE == FALSE | drop_MOE == F) {
+    
+    output <- x %>% 
+      rename_at(vars(estimate), 
+                ~ names)
+    
+  }
+  
+  output
 }
