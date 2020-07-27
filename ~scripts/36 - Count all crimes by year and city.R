@@ -16,7 +16,7 @@ years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
 allCrimes_countByCity <- vector("list", length(years_byCity)) %>% 
   set_names(names(years_byCity))
 
-for (city in seq_len(length(years_byCity))[c(15:34)]) {
+for (city in seq_len(length(years_byCity))) {
   cityName <- names(years_byCity)[[city]]
   cityYears <- years_byCity[[city]]
   
