@@ -1,9 +1,11 @@
 ##########################################################################
 # This script:
 # 1. Counts the total crimes in every city by year 
+# 2. Finds and plots percentage of crimes that are gun crimes by year
 #
 # Exports: 
 # 1. allCrimes_countByCity as 36_allCrimes_countByCity.rds
+# 2. gunPercentage_byYear as 36_gunPercentage_byYear.rds
 #
 # To-do:
 # 1. 
@@ -12,7 +14,9 @@
 
 ## 1. ----
 years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
+gunCount_byYear_list <- readRDS("~outputs/30/31_gunCount_byYear_list.rds")
 
+# allCrimes_countByCity <- readRDS("~outputs/30/36_allCrimes_countByCity.rds")
 allCrimes_countByCity <- vector("list", length(years_byCity)) %>% 
   set_names(names(years_byCity))
 
@@ -50,6 +54,34 @@ for (city in seq_len(length(years_byCity))) {
   
 }
 
+## 2. ----
+gunPercentage_byYear <- map2(
+  allCrimes_countByCity,
+  gunCount_byYear_list,
+  ~ left_join(.x, .y, by = "year") %>% 
+    mutate(
+      gun_perc = gun_count / totalCrimes
+    )
+)
+
+gunPercentage_byYear_plots <- map(gunPercentage_byYear,
+                                ~ .x %>% 
+                                  ggplot(aes(x = year,
+                                             y = gun_perc)) +
+                                  geom_bar(position = "dodge",
+                                           stat = "identity") +
+                                  scale_x_continuous(breaks = seq(min(.x$year), max(.x$year), 2)) + 
+                                  plotTheme() +
+                                  labs(title = "Gun crimes as % of crimes by year",
+                                       x = "Year",
+                                       y = "% Gun Crimes"))
+
 ## 1. Export as rds ----
 saveRDS(allCrimes_countByCity,
         "~outputs/30/36_allCrimes_countByCity.rds")
+
+## 2. Export as rds ----
+saveRDS(gunPercentage_byYear,
+        "~outputs/30/36_gunPercentage_byYear.rds")
+saveRDS(gunPercentage_byYear_plots,
+        "~outputs/30/36_gunPercentage_byYear_plots.rds")

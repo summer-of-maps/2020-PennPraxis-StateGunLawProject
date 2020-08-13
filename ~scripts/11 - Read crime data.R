@@ -26,13 +26,3 @@ guns_df <- allCrimes_df %>%
 ## 1. Export as rds ----
 # saveRDS(guns_df,
 #         "~outputs/10/11_guns_df.rds")
-
-allCrimes_df %>%
-  filter(city == "Chicago",
-         weapgun == 1) %>%
-  nrow
-
-allCrimes_df %>%
-  filter(city == "Chicago",
-         adagun == 1) %>%
-  nrow

@@ -5,6 +5,9 @@
 # 3. Local Moran's I hotspot maps
 #   a. All years
 #   b. By year
+# 4. Local Moran's I deliverable maps
+#   a. All Years
+#   b. By year
 #
 # Exports: 
 # 1. BGs_per100_I_byYear_plots as 34a_BGs_per100_I_byYear_plots.rds
@@ -54,13 +57,17 @@ BGs_per100_I_byYear_plots <- map(BGs_per100_I_byYear_list,
 # gunIncidentsByYear_plots <- readRDS("~outputs/30/31c_gunIncidentsByYear_plots.rds")
 # gunCount_byYear_list <- readRDS("~outputs/30/31_gunCount_byYear_list.rds")
 # siegelSum_plots <- readRDS("~outputs/30/30_siegelSum_plots.rds")
+# gunPercentage_byYear_plots <- readRDS("~outputs/30/36_gunPercentage_byYear_plots.rds") # note this comes from a later script
+BGs_per100_I_byYear_plots <- readRDS("~outputs/30/34a_BGs_per100_I_byYear_plots.rds")
 Siegel_gunCount_MoransI_plots <- pmap(.l = list(BGs_per100_I_byYear_plots,
-                                      gunIncidentsByYear_plots,
-                                      gunCount_byYear_list),
-                                      function(a, b, c) 
+                                      gunIncidentsByYear_plots[c(1:14, 16:34)],
+                                      gunPercentage_byYear_plots[c(1:14, 16:34)],
+                                      gunCount_byYear_list[c(1:14, 16:34)]),
+                                      function(a, b, c, d) 
                                         plot_grid_diffAxes(a,
                                                            b,
-                                                           siegelSum_plots[[c[1,] %>% pull(state)]],
+                                                           c,
+                                                           siegelSum_plots[[d[1,] %>% pull(state)]],
                                                            ncol = 1,
                                                            align = "v"))
 
@@ -147,6 +154,12 @@ BG_cluster_maps <- pmap(list(basemap_list,
                         make_cluster_map,
                         darken = 0.3)
 
+siegel_tmp <- map_dfr(gunCount_byYear_list,
+              ~ siegelSum_list[[.x[1,] %>% pull(state)]] %>% # get siegel score for plot label
+  filter(year == max(year)) %>% 
+  pull(score),
+  .id = "City")
+
 ## 3b. ----
 basemap_list <- readRDS("~outputs/30/31a_basemap_list.rds")
 BGs_per100_localI_byYear <- readRDS("~outputs/30/34_BGs_per100_localI_byYear.rds")
@@ -195,29 +208,229 @@ for (city in seq_len(length(BG_cluster_maps_byYear))) {
   
 }
 
-# blah <- BGs_per100_localI_byYear$Atlanta %>% bind_rows(.id = "year")
-# 
-# plt <- ggmap(basemap_list$Atlanta) +
-#   geom_sf(data = blah, aes(fill = factor(cluster,
-#                                        levels = c("insignificant", "high-high", "high-low", "low-high", "low-low"))),
-#           color = "gray",
-#           inherit.aes = FALSE) + 
-#   scale_fill_manual(name = "Local Clusters/Outliers",
-#                     values = c("white", "#ca0020", "#f4a582", "#92c5de", "#0571b0"),
-#                     limits = c("insignificant", "high-high", "high-low", "low-high", "low-low")) +
-#   mapTheme() +
-#   labs(title = "Gun Crime Clusters and Outliers",
-#        subtitle = "Significant at p value < 0.05")
-# 
-# tm_shape(blah) + tm_polygons(col = "cluster") + 
-#   tm_facets(along = "year", free.coords = FALSE)
+
+## 4a. ----
+city_bounds <- readRDS("~outputs/10/14_city_bounds.rds")
+proj_list <- readRDS("~outputs/10/14_proj_list.rds")
+BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
+land_list <- readRDS("~outputs/10/15_land_list.rds")
+context_bbox_list <- readRDS("~outputs/10/15_context_bbox_list.rds")
+context_mask_list <- readRDS("~outputs/10/15_context_mask_list.rds")
+hydrology_list <- readRDS("~outputs/10/15_hydrology_list.rds")
+roads_list <- readRDS("~outputs/10/15_roads_list.rds")
+years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
+
+
+city <- 6
+
+
+
+legend_plot <- ggplot() +
+  geom_sf(data = land_list[[city]],
+          # fill = "darkgray",
+          fill = "#252525",
+          alpha = 0.9,
+          color = NA) +
+  geom_sf(data = BGs_per100_localI[[city]], aes(fill = cluster),
+          color = "#999999",
+          size = 0.01,
+          # color = NA,
+          alpha = 0.8,
+          inherit.aes = FALSE) + 
+  scale_fill_manual(name = "Statistically Significant\nClusters / Outliers\n(p value < 0.05)",
+                    values = c("#252525", "#ca0020", "#f4a582", "#92c5de", "#0571b0"),
+                    limits = c("insignificant", "high-high", "high-low", "low-high", "low-low"),
+                    labels = c("Not Significant", "Hot Spot", "High Crime in a\nLower Crime Area", "Low Crime in a\nHigher Crime Area", "Cold Spot")) +
+  geom_sf(data = hydrology_list[[city]],
+          fill = "#525252",
+          # fill = "#97DBF2",
+          color = NA) +
+  geom_sf(data = roads_list[[city]],
+          # color = "#feb24c",
+          color = "#737373"
+          # color = "gray"
+  ) +
+  scale_size_manual(guide = FALSE,
+                    breaks = c("Major", "Minor"),
+                    values = c(0.5, 0.25)) +
+  mapTheme() +
+  theme(legend.spacing.y = unit(0.5, 'cm'),
+        # legend.key.size = unit(1.5, "cm"),
+        legend.key.size = unit(2, 'lines'),
+        legend.title = element_text(color = "white"),
+        legend.text = element_text(color = "white"),
+        legend.background = element_rect(fill = "#525252"),
+        panel.border = element_blank())
+
+legend_tmp <- get_legend(legend_plot)
+legend <- ggpubr::as_ggplot(legend_tmp)
+
+ggsave(plot = legend,
+       filename = paste0("~outputs/Plots/~Deliverable maps/34a_BG_cluster_maps_allYears/Illustrator/",
+                         # name,
+                         "legend.pdf"),
+       device = "pdf",
+       units = "in",
+       dpi = 300,
+       width = (120/72),
+       height = (200/72)
+       )
+
+BGs_clusters_maps_list <- vector("list", length(BGs_per100_localI)) %>% 
+  set_names(names(BGs_per100_localI))
+
+for (city in seq_len(length(BGs_clusters_maps_list))) {
+  
+  name <- names(BGs_clusters_maps_list)[city]
+  print(name)
+  
+  BGs_clusters_maps_list[[name]] <- ggplot() +
+    geom_sf(data = land_list[[name]],
+            # fill = "darkgray",
+            fill = "#252525",
+            alpha = 0.9,
+            color = NA) +
+    geom_sf(data = BGs_per100_localI[[name]], aes(fill = cluster),
+            color = "#999999",
+            size = 0.01,
+            # color = NA,
+            alpha = 0.8,
+            inherit.aes = FALSE) + 
+    scale_fill_manual(name = "Statistically Significant\nClusters / Outliers\n(p value < 0.05)",
+                      values = c("#252525", "#ca0020", "#f4a582", "#92c5de", "#0571b0"),
+                      limits = c("insignificant", "high-high", "high-low", "low-high", "low-low"),
+                      labels = c("Not Significant", "Hot Spot", "High Crime in a\nLower Crime Area", "Low Crime in a\nHigher Crime Area", "Cold Spot")) +
+    geom_sf(data = hydrology_list[[name]],
+            fill = "#525252",
+            # fill = "#97DBF2",
+            color = NA) +
+    geom_sf(data = roads_list[[name]],
+            # color = "#feb24c",
+            color = "#737373"
+            # color = "gray"
+    ) +
+    scale_size_manual(guide = FALSE,
+                      breaks = c("Major", "Minor"),
+                      values = c(0.5, 0.25)) +
+    mapTheme() +
+    theme(legend.position = "none",
+          panel.border = element_blank())
+  
+  ggsave(plot = BGs_clusters_maps_list[[name]],
+         filename = paste0("~outputs/Plots/~Deliverable maps/34a_BG_cluster_maps_allYears/",
+                           name,
+                           "_map.pdf"), 
+         device = "pdf",
+         units = "in",
+         dpi = 300,
+         width = 8.5,
+         height = 11)
+  
+}
+
+
+
+
+
+
+
+
+city <- 15
+name <- names(BGs_clusters_maps_list)[city]
+
+ggplot() +
+  geom_sf(data = land_list[[city]],
+          # fill = "darkgray",
+          fill = "#252525",
+          alpha = 0.9,
+          color = NA) +
+  geom_sf(data = BGs_per100_localI[[city]], aes(fill = cluster),
+          color = "#999999",
+          size = 0.01,
+          # color = NA,
+          alpha = 0.8,
+          inherit.aes = FALSE) + 
+  scale_fill_manual(name = "Statistically Significant\nClusters / Outliers\n(p value < 0.05)",
+                    values = c("#252525", "#ca0020", "#f4a582", "#92c5de", "#0571b0"),
+                    limits = c("insignificant", "high-high", "high-low", "low-high", "low-low"),
+                    labels = c("Not Significant", "Hot Spot", "High Crime in a\nLower Crime Area", "Low Crime in a\nHigher Crime Area", "Cold Spot")) +
+  geom_sf(data = hydrology_list[[city]],
+          fill = "#525252",
+          # fill = "#97DBF2",
+          color = NA) +
+  geom_sf(data = roads_list[[city]],
+          # color = "#feb24c",
+          color = "#737373"
+          # color = "gray"
+  ) +
+  # geom_sf(data = border,
+  #         fill = NA,
+  #         size = 0.3,
+  #         col = "8e8e8e") +
+  scale_size_manual(guide = FALSE,
+                    breaks = c("Major", "Minor"),
+                    values = c(0.5, 0.25)) +
+  mapTheme() +
+  theme(legend.position = "none",
+        panel.border = element_blank())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## 1. Export as rds ----
 # saveRDS(BGs_per100_I_byYear_plots,
 #         "~outputs/30/34a_BGs_per100_I_byYear_plots.rds")
 
 ## 2. Export as png ----
-map2(Siegel_gunCount_MoransI_plots,
+walk2(Siegel_gunCount_MoransI_plots,
      names(Siegel_gunCount_MoransI_plots),
      ~ save_plot(plot = .x,
                  filename = paste("~outputs/Plots/34a_siegel_gunCount_MoransI_plots/34a_",
@@ -226,7 +439,7 @@ map2(Siegel_gunCount_MoransI_plots,
                                   sep = ""),
                  dpi = 72,
                  nrow = 3,
-                 base_height = 4,
+                 base_height = 5,
                  base_width = 8))
 
 ## 3a. Export as png ----

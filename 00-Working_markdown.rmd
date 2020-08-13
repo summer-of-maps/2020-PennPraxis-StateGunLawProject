@@ -523,7 +523,7 @@ for (i in 1:length(tmp)) {
 
 ##### Siegel Scores, Gun Crime Count, and Moran's I by Year {.tabset}
 
-The plots below show the Moran's I (extent of spatial clustering), count of gun crimes, and Siegel Score for every city by year. The x-axis is aligned on each, so you can read straight down, but some of the cities with fewer years of data will look compressed horizontally.
+The plots below show the Moran's I (extent of spatial clustering), count of gun crimes, percentage of all crimes that are gun crimes, and Siegel Score for every city by year. The x-axis is aligned on each, so you can read straight down, but some of the cities with fewer years of data will look compressed horizontally.
 
 A note on **outliers:** I noticed last time that several cities (NYC, LA, SF, others) had Moran's Is of around 0, and this persisted even when looking at them year-by-year, despite visual evidence in the maps showing clear clustering (see map of San Francisco above, for example). This was due to outliers in the gun crimes / 100 stat (a few gun crimes in an area with low population lead to extremely high values). So, I filtered out the block groups every year that had values higher than the 99.5th percentile in each city. In LA, this had the effect of changing the Moran's I from 0 to around 0.55, a much more sensible value. The 99.5th percentile cut-off is arbitrary. Also, those block groups were filtered out rather than imputed, so they would be empty on a map.
 
@@ -562,7 +562,7 @@ A note on **outliers:** I noticed last time that several cities (NYC, LA, SF, ot
 ```{r,  results='asis', echo = FALSE}
 # source("~scripts/34a -  Moran's I plots.R") 
 
-tmp <- list.files("~outputs/Plots/34a_siegel_gunCount_MoransI_plots",
+tmp <- list.files("~outputs/Plots/34a_siegel_gunCount_MoransI_plots", 
                   full.names = TRUE) 
 
 for (i in 1:length(tmp)) {
@@ -627,7 +627,7 @@ BGs_per100_localI_census_tmp <- map(
               Black_pct_weighted = round(weighted.mean(Black_pct, TotPop, na.rm = TRUE), 2),
               TotPop = sum(TotPop, na.rm = TRUE),
               .groups = "drop") %>% 
-    arrange(desc(hotspot)))
+    arrange(desc(hotspot))) 
 
 
 ```
@@ -636,7 +636,7 @@ BGs_per100_localI_census_tmp <- map(
 
 num_rows <- map(1:length(names(BGs_per100_localI_census_tmp)), 
                 ~ nrow(BGs_per100_localI_census_tmp[[.x]])) %>% 
-                  unlist()
+                  unlist() 
 
 BGs_per100_localI_census_tmp %>%
   bind_rows() %>% 

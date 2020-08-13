@@ -25,6 +25,8 @@ library(furrr) # parallel processing
 library(readxl)
 library(data.table)
 library(lubridate)
+library(osmdata)
+library(measurements)
 
 # spatial data
 library(sf)
@@ -38,20 +40,23 @@ library(stars)
 library(sppt) # Andresen's S used in MSEA function
 library(GISTools)
 library(hydroGOF) # RMSE function used in the MSEA function
+library(crsuggest) # for finding projections
 
 # census
 library(tidycensus)
 library(tigris)
 
-# visualization and geocoding
-library(ggmap) # basemaps
+# visualization
+library(ggmap) # basemaps and geocoding
 library(gridExtra)
 library(knitr)
 library(kableExtra)
 # library(wesanderson) # palettes
 library(cowplot) # for arranging plots
 library(magick) # make GIFs
-
+# devtools::install_github("mtennekes/oldtmaptools")
+library(oldtmaptools) # for heatmaps
+library(ggnewscale) # multiple ggplot color/fill scales
 
 # debugging
 library(rbenchmark) # time processing speed
@@ -84,7 +89,7 @@ mapTheme <- function(base_size = 12) {
     text = element_text(color = "black"),
     plot.title = element_text(size = 14, colour = "black"),
     plot.subtitle = element_text(face = "italic"),
-    plot.caption = element_text(hjust = 0),
+    plot.caption = element_text(hjust = 1),
     axis.ticks = element_blank(),
     panel.background = element_blank(),
     axis.title = element_blank(),

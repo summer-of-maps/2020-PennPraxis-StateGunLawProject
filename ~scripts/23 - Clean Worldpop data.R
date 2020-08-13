@@ -19,23 +19,56 @@
 
 ## 1. ----
 # years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
-years_byCity <- map(gunCount_byYear_list,
-                    ~ sort(.x$year) %>% 
-                      set_names(., nm = .))
+years_byCity <- map(guns_list_shp,
+                    ~ .x %>% 
+                      pull(year) %>% 
+                      unique() %>% 
+                      sort() %>% 
+                      set_names()
+                    )
 
 # for every year for which we have crime data for every city
 # crop and mask the relevant worldpop USA raster file
 plan(multiprocess)
 
-worldpop_byCity <- future_map2(BG_selection_list$byCaveHull,
-             years_byCity,
-             function(BGs, cityTimes)
-               map(cityTimes,
-                   function(year) 
-                     crop(worldpop_list[[as.character(year)]],
-                          BGs) %>% 
-                     mask(BGs)),
-             .progress = TRUE)
+# worldpop_byCity <- future_map2(BG_selection_list$byPlace,
+#              years_byCity,
+#              function(BGs, cityTimes)
+#                map(cityTimes,
+#                    function(year) 
+#                      crop(worldpop_list[[as.character(year)]],
+#                           BGs) %>% 
+#                      mask(BGs)),
+#              .progress = TRUE)
+
+worldpop_byCity_raster <- vector("list", length(BG_selection_list$byPlace)) %>%
+  set_names(names(BG_selection_list$byPlace))
+
+for (city in seq_len(length(BG_selection_list$byPlace))[16:34]){
+  
+  print(names(BG_selection_list$byPlace)[city])
+  
+  BGs <- BG_selection_list$byPlace[[city]]
+  
+  city_years <- years_byCity[[city]]
+  worldpop_byCity_raster[[city]] <- vector("list",
+                                           length(city_years)) %>% 
+    set_names(names(city_years))
+  
+  for (year in seq_len(length(city_years))) {
+    
+    print(names(city_years)[year])
+    
+    worldpop_byCity_raster[[city]][[year]] <- 
+      crop(worldpop_list[[year]],
+           BGs) %>% 
+      mask(BGs)
+    
+  }
+  
+  
+}
+
 
 ## 2. ----
 # years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
@@ -75,8 +108,8 @@ worldpop_data <- worldpop_data %>%
 
 ## 3. ----
 # BG_pops_byYear <- readRDS("~outputs/20/23_BG_pops_byYear.rds")
-BG_pops_byYear <- vector("list", length(BG_selection_list$byCaveHull)) %>% 
-  set_names(names(BG_selection_list$byCaveHull))
+BG_pops_byYear <- vector("list", length(BG_selection_list$byPlace)) %>% 
+  set_names(names(BG_selection_list$byPlace))
 
 for (city in seq_len(length(BG_pops_byYear))) {
   print(names(BG_pops_byYear)[city])
@@ -89,14 +122,14 @@ for (city in seq_len(length(BG_pops_byYear))) {
     
     BG_pops_byYear[[city]][[year]] <- 
       suppressMessages(aggregate(st_as_stars(worldpop_byCity_raster[[city]][[year]]),
-                                 BG_selection_list$byCaveHull[[city]],
+                                 BG_selection_list$byPlace[[city]],
                                  FUN = sum,
                                  na.rm = TRUE)) %>% 
       st_as_sf() %>% 
       st_drop_geometry() %>% 
       rename(worldPop = 1) %>% 
       mutate(worldPop = round(worldPop)) %>% 
-      cbind(BG_selection_list$byCaveHull[[city]]) %>% 
+      cbind(BG_selection_list$byPlace[[city]]) %>% 
       dplyr::select(GEOID, worldPop)
     
   }
@@ -106,8 +139,8 @@ for (city in seq_len(length(BG_pops_byYear))) {
 ## 1. Export as rds ----
 # saveRDS(years_byCity,
 #         "~outputs/20/23_years_byCity.rds")
-# saveRDS(worldpop_byCity_raster,
-#         "~outputs/~large_files/23_worldpop_byCity_raster.rds")
+saveRDS(worldpop_byCity_raster,
+        "~outputs/~large_files/23_worldpop_byCity_raster.rds")
 
 ## 2. Export as rds ----
 # saveRDS(worldpop_grids,

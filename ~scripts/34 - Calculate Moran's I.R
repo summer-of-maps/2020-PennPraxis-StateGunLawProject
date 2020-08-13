@@ -70,18 +70,26 @@ BGs_per100_I <- map(BGs_crimeCounts,
                                                           queen = TRUE,
                                                           style = "W")))
 
+
 ## 2. ----
 # BGs_crimeCounts_byYear <- readRDS("~outputs/30/33_BGs_crimeCounts_byYear.rds")
 plan(multiprocess)
-BGs_per100_I_byYear <- future_map(BGs_crimeCounts_byYear,
-                           function(x) map(x,
-                                    function(y) find_Moran_I(shp = y,
-                                                             var_name = "guns_per100",
-                                                             queen = TRUE,
-                                                             style = "W")))
+BGs_per100_I_byYear <- future_map2(BGs_crimeCounts_byYear[c(1:14, 16:34)],
+                                   BG_selection_list$byPlace[c(1:14, 16:34)],
+                           function(counts, BGs) 
+                             map(counts,
+                                 function(y) BGs %>% 
+                                   dplyr::select(GEOID, geometry) %>% 
+                                   left_join(y,
+                                             by = "GEOID") %>% 
+                                   find_Moran_I(shp = .,
+                                                var_name = "guns_per100",
+                                                queen = TRUE,
+                                                style = "W")))
+
 
 ## 3a. ----
-BGs_per100_localI <- future_map(BGs_crimeCounts$byCaveHull,
+BGs_per100_localI <- future_map(BGs_crimeCounts$byPlace[c(1:14, 16:34)],
                          ~ find_localMoran(.x,
                                            var_name = "guns_per100",
                                            queen = TRUE,
@@ -90,7 +98,7 @@ BGs_per100_localI <- future_map(BGs_crimeCounts$byCaveHull,
                            cbind(.,
                                  .x) %>% 
                            dplyr::select(GEOID, 
-                                         NAME, 
+                                         NAME,
                                          variable, 
                                          pop, 
                                          gun_count, 
@@ -112,19 +120,27 @@ BGs_per100_localI <- future_map(BGs_crimeCounts$byCaveHull,
                            st_sf())
 
 ## 3b. ----
-BGs_per100_localI_byYear <- future_map(BGs_crimeCounts_byYear,
-                                  function(x) map(x,
-                                                  function(y) find_localMoran(shp = y,
+BGs_per100_localI_byYear <- future_map2(BGs_crimeCounts_byYear[c(1:14, 16:34)],
+                                        BG_selection_list$byPlace[c(1:14, 16:34)],
+                                  function(counts, BGs) map(counts,
+                                                  function(y) BGs %>% 
+                                                    dplyr::select(GEOID, geometry) %>% 
+                                                    left_join(y,
+                                                              by = "GEOID") %>% 
+                                                    find_localMoran(shp = .,
                                                                            var_name = "guns_per100",
                                                                            queen = TRUE,
                                                                            style = "W") %>% 
                                                     as.data.frame() %>%
                                                     cbind(.,
                                                           y) %>% 
+                                                    right_join(BGs %>% 
+                                                                 dplyr::select(GEOID, geometry),
+                                                               by = "GEOID") %>% 
                                                     dplyr::select(GEOID, 
-                                                                  NAME, 
-                                                                  variable, 
-                                                                  pop, 
+                                                                  # NAME, 
+                                                                  # variable, 
+                                                                  pop = worldPop, 
                                                                   gun_count, 
                                                                   guns_per100, 
                                                                   Local_Morans_I = Ii,
@@ -138,8 +154,21 @@ BGs_per100_localI_byYear <- future_map(BGs_crimeCounts_byYear,
                                                                                significant == "Yes" & guns_per100_norm < 0 & Local_Morans_I_norm < 0 ~ "low-low",
                                                                                significant == "Yes" & guns_per100_norm > 0 & Local_Morans_I_norm < 0 ~ "high-low",
                                                                                significant == "Yes" & guns_per100_norm < 0 & Local_Morans_I_norm > 0 ~ "low-high",
-                                                                               TRUE ~ NA_character_)) %>% 
+                                                                               TRUE ~ NA_character_),
+                                                           cluster = factor(cluster,
+                                                                            levels = c("insignificant", "high-high", "high-low", "low-high", "low-low"))) %>% 
                                                     st_sf()))
+
+
+
+
+
+
+
+
+
+
+
 
 ## 4. ----
 BGs_per100_localI <- readRDS("~outputs/30/34_BGs_per100_localI.rds")
@@ -147,7 +176,7 @@ allState_censusDat_BGs <- readRDS("~outputs/20/22_allState_censusDat_BGs.rds")
 
 BGs_per100_localI_census <- map2(
   BGs_per100_localI,
-  allState_censusDat_BGs,
+  allState_censusDat_BGs[c(1:14, 16:34)],
   ~ .x %>% 
     dplyr::select(-c(NAME, variable, pop)) %>% 
     left_join(.y,

@@ -39,12 +39,15 @@ tracts_crimeCounts <- map(tract_selection_list, # loop over the 4 sets of tracts
                                           guns_per100 = (gun_count / pop) * 100,
                                           guns_per100 = ifelse(is.na(guns_per100), 0,
                                                                # turn inf values to avg of non-inf values
-                                                                  ifelse(is.infinite(guns_per100),
-                                                                         mean(guns_per100 *
-                                                                                is.finite(guns_per100), 
-                                                                              na.rm = TRUE),
-                                                                         guns_per100))) %>% 
-                                   filter(guns_per100 < quantile(guns_per100, 0.995))))
+                                                               ifelse(is.infinite(guns_per100),
+                                                                      mean(guns_per100 *
+                                                                             is.finite(guns_per100), 
+                                                                           na.rm = TRUE),
+                                                                      guns_per100)),
+                                          guns_per100 = ifelse(guns_per100 > quantile(guns_per100, 0.995),
+                                                               mean(guns_per100 *
+                                                                      is.finite(guns_per100)),
+                                                               guns_per100))))
 
 ## 1b. ----
 # BG_selection_list <- readRDS("~outputs/20/22_BG_selection_list.rds")
@@ -68,13 +71,17 @@ BGs_crimeCounts <- map(BG_selection_list, # loop over the 4 sets of BGs
                                                                    mean(guns_per100 *
                                                                           is.finite(guns_per100), 
                                                                         na.rm = TRUE),
-                                                                   guns_per100))) %>% 
-                                         filter(guns_per100 < quantile(guns_per100, 0.995))))
+                                                                   guns_per100)),
+                                       guns_per100 = ifelse(guns_per100 > quantile(guns_per100, 0.995),
+                                                            mean(guns_per100 *
+                                                                   is.finite(guns_per100)),
+                                                            guns_per100))))
 
 ## 2. ----
 # note that this uses worldPop population data for every year rather than census geographies to ensure that
 # geometries are the same every year.
 
+# BG_pops_byYear <- readRDS("~outputs/20/23_BG_pops_byYear.rds")
 BGs_crimeCounts_byYear <- vector("list", length(BG_pops_byYear)) %>% 
   set_names(names(BG_pops_byYear))
 
@@ -87,7 +94,7 @@ for (city in seq_len(length(BGs_crimeCounts_byYear))) {
   for (year in seq_len(length(years_byCity[[city]]))) {
     print(years_byCity[[city]][[year]])
     
-    BGs_crimeCounts_byYear[[city]][[year]] <- BG_selection_list$byCaveHull[[city]] %>% 
+    BGs_crimeCounts_byYear[[city]][[year]] <- BG_selection_list$byPlace[[city]] %>% 
       dplyr::select(GEOID, geometry) %>% 
       left_join(BG_pops_byYear[[city]][[year]],
                 by = "GEOID") %>% 
@@ -188,9 +195,9 @@ for (city in seq_len(length(worldpop_crimeCounts_byYear))) {
 #         "~outputs/30/33_BGs_crimeCounts_byYear.rds")
 
 ## 3a. Export as rds ----
-# saveRDS(worldpop_crimeCounts,
-#         "~outputs/~large_files/33_worldpop_crimeCounts.rds")
+saveRDS(worldpop_crimeCounts,
+        "~outputs/~large_files/33_worldpop_crimeCounts.rds")
 
 ## 3b. Export as rds ----
-# saveRDS(worldpop_crimeCounts_byYear,
-#         "~outputs/~large_files/33_worldpop_crimeCounts_byYear.rds")
+saveRDS(worldpop_crimeCounts_byYear,
+        "~outputs/~large_files/33_worldpop_crimeCounts_byYear.rds")

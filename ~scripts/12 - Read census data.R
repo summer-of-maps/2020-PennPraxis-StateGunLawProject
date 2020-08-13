@@ -56,17 +56,22 @@ allStateTracts <- map(states_list,
 #         file = "~outputs/10/12_allStateTracts.rds")
 
 # places
-places <- map(states_list,
-              ~ places(state = .x,
-                       year = 2018,
-                       class = "sf") %>% 
-                st_transform(4326))
+# places <- map(states_list,
+#               ~ places(state = .x,
+#                        year = 2018,
+#                        class = "sf") %>% 
+#                 st_transform(4326))
 
-# saveRDS(places,
-#         file = "~outputs/~large_files/12_places.rds",
-#         compress = TRUE)
+
+### USE CITY_BOUNDS FROM SCRIPT 14 INSTEAD
+places <-  readRDS("~outputs/10/14_city_bounds.rds")
+
+saveRDS(places,
+        file = "~outputs/~large_files/12_places.rds",
+        compress = TRUE)
 
 ## 3. ----
+allStateBGs <- readRDS("~outputs/10/12_allStateBGs.rds")
 allStateBGs <- map(states_list,
                    possibly(~ get_acs(geography = "block group",
                              year = 2018,
@@ -119,6 +124,7 @@ allState_censusDat_BGs_raw <- map(states_list,
                                                  names = census_colNames,
                                                  drop_MOE = TRUE),
                             otherwise = NA_character_))
+
                    
 ## 4. Export as rds ----
 # saveRDS(allState_censusDat_BGs_raw,
