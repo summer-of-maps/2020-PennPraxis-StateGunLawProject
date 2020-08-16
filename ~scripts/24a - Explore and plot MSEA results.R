@@ -8,8 +8,10 @@ blah2 <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/PennPraxis_S
 blah4 <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/PennPraxis_StateGunLawProject/~outputs/20/24_grid_cells/24_Baltimore_MSEA.rds")
 blah5 <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/PennPraxis_StateGunLawProject/~outputs/20/24_grid_cells/diff/24_Baltimore_MSEA_diff.rds")
 
-blah3 <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/PennPraxis_StateGunLawProject/~outputs/20/24_grid_cells/diff/24_Los Angeles_MSEA_diff.rds")
-blah <- blah3
+blah3 <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/PennPraxis_StateGunLawProject/~outputs/20/24_grid_cells/diff/24_Philadelphia_MSEA_diff.rds")
+blah6 <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/PennPraxis_StateGunLawProject/~outputs/20/24_grid_cells/diff/24_Detroit_MSEA_diff.rds")
+
+blah <- blah5
 
 # guns_list_shp_evenYears <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/PennPraxis_StateGunLawProject/~outputs/20/24_guns_list_shp_evenYears.rds")
 years_byCity <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/PennPraxis_StateGunLawProject/~outputs/20/23_years_byCity.rds")
@@ -18,11 +20,17 @@ guns_list_shp <- readRDS("C:/Users/echong/Documents/SummerOfMaps/PennPraxis/Penn
 
 
 
-tm_shape(blah$grid[[5]]) + tm_borders(col = "red") + 
-  tm_shape(blah$grid[[6]]) + tm_borders(col = "blue") +
-  tm_shape(blah$grid[[7]]) + tm_borders(col = "green")  +
-  tm_shape(blah$grid[[8]]) + tm_borders(col = "orange") +
-  tm_shape(blah$grid[[9]]) + tm_borders(col = "black")
+tm_shape(blah5$grid[[5]]) + tm_borders(col = "red") + 
+  tm_shape(blah5$grid[[6]]) + tm_borders(col = "blue") +
+  tm_shape(blah5$grid[[7]]) + tm_borders(col = "green")  +
+  tm_shape(blah5$grid[[8]]) + tm_borders(col = "orange") +
+  tm_shape(blah5$grid[[9]]) + tm_borders(col = "black")
+
+tm_shape(blah5$grid[[100]]) + tm_borders(col = "red") + 
+  tm_shape(blah5$grid[[101]]) + tm_borders(col = "blue") +
+  tm_shape(blah5$grid[[7]]) + tm_borders(col = "green")  +
+  tm_shape(blah5$grid[[99]]) + tm_borders(col = "orange") +
+  tm_shape(blah5$grid[[9]]) + tm_borders(col = "black")
 
 
 for (j in 1:num.grids) {
@@ -107,10 +115,14 @@ ratio <- sapply(X = grids, FUN=function(x) {
     } ) 
 
 tmp <- data.frame(n.cells, mean.expected, ratio)
-ggplot(tmp, aes(x = n.cells, y = ratio)) +
+tmp_plot1 <- ggplot(tmp, aes(x = n.cells, y = ratio)) +
   geom_point() +
   geom_smooth(method = "loess") +
-  labs(title = "Proportion of cells with expected points > 5")
+  geom_vline(xintercept = 1200,
+             col = "red") +
+  labs(title = "Proportion of cells with expected points > 5") +
+  plotTheme() +
+  xlim(0, 6000)
 
 
 
@@ -124,7 +136,9 @@ ggplot(tmp,
            y = globalS)) +
   geom_point(color = "black") +
   geom_smooth(method = "loess") +
-  labs(title = "Mean Similarity, including all cells, even those with low expected frequency")
+  labs(title = "Mean Similarity, including all cells, even those with low expected frequency") +
+  plotTheme() +
+  xlim(0, 6000)
 
 
 ## And what about the raw numbers of cells. This is possibly useful because it gives us an idea about how much information we're using to determine similarity, but can be misleading because it ignores the fact that the total number of cells increases with resolution, so the number with expected > 5 increases as well.----
@@ -140,11 +154,13 @@ ggplot(tmp, aes(x = n.cells, y = num)) +
 statistic <- "similarity" # (note 'similarity' rather than 'mean.similarity' because we're looking at the similarity on a cell-level, not mean of the whole grid)
 options(scipen=10)
 
-cell <- 249
+cell <- 240
 
 n.cells <- blah[["num.cells"]][cell]
 sq.area <- blah[["cell.areas"]][cell]
-grid <- blah$grid[[cell]] # need the output s objects to get the expected value
+# grid <- blah$grid[[cell]] # need the output s objects to get the expected value
+grid <- blah$s.object[[cell]] # need the output s objects to get the expected value
+
 cols <- sapply( X = 1:nrow(grid), FUN = function(i) {
   expected <- grid$expected[i]
   sim <- grid[[statistic]][1]
@@ -159,7 +175,12 @@ tmp <- cbind(grid, cols) %>%
                                       NA,
                                       similarity))
 ggplot() +
-  geom_sf(data = tmp, aes(fill = factor(sim_expectedOnly)))
+  geom_sf(data = blah$grid[[cell]], fill = NA, size = 0.01) +
+  geom_sf(data = tmp, size = 0.01, aes(fill = factor(sim_expectedOnly))) +
+  scale_fill_manual(na.value = NA,
+                    values = c("#d8b365", 
+                               "#5ab4ac")) +
+  mapTheme()
 
 
 
@@ -218,6 +239,26 @@ for (j in 1:num.grids) {
     }
 
 
+    tmp_plot2 <- ggplot(df[10:334,], aes(NumCells, NewSimilarity)) +
+      geom_hex(bins=20, show.legend = FALSE) +
+      scale_fill_gradientn(colours=c("white","red"),name = "Frequency")+
+      #geom_point(size=0.5, color=colours[i]) +
+      geom_point(size=0.8, color='black') + 
+      geom_smooth(method="loess", se=TRUE, level=0.99, colour="black")+
+      ggtitle(paste0("Mean Similarity","\n(Excluding cells with low expected frequency)"))+
+      geom_vline(xintercept = 1200,
+                 col = "red") +
+      ylab("Mean Similatiry")+
+      xlab("Number of Cells in the Grid") +
+      xlim(0, 6000) +
+      # ylim(0.9, 0.96) +
+      plotTheme()
+
+grid.arrange(tmp_plot1, tmp_plot2, ncol = 1)
+
+blah$grid[[65]] %>% st_area %>% mean %>% 
+  as.numeric() %>% 
+  conv_unit(from = "m2", to = "acre")
 
 
 
@@ -225,20 +266,28 @@ for (j in 1:num.grids) {
 
 
 
+results_tmp <- blah$grid[[65]] %>% mutate(
+  count_2017 = lengths(st_intersects(., guns_list_shp_byYear$Baltimore$`2017`)),
+  count_2018 = lengths(st_intersects(., guns_list_shp_byYear$Baltimore$`2018`))
+) %>% 
+  gather(key = "year",
+         value = "count",
+         count_2017:count_2018)
 
+tmp_3 <- bind_rows(guns_list_shp_byYear$Baltimore$`2017` %>% 
+                     mutate(year = 2017),
+                   guns_list_shp_byYear$Baltimore$`2018` %>% 
+                     mutate(year = 2018)) %>% 
+  .[results_tmp,]
 
-
-
-
-
-
-
-
-
-
-
-
-
+ggplot() +
+  geom_sf(data = results_tmp,
+          aes(fill = count)) +
+  geom_sf(data = tmp_3,
+          col = "red") +
+  scale_fill_viridis_c() +
+  facet_wrap(~ year) +
+  mapTheme()
 
 
 

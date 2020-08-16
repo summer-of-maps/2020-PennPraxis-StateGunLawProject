@@ -16,7 +16,7 @@
 # test with Philly
 # BGs_crimeCounts_byYear <- readRDS("~outputs/30/33_BGs_crimeCounts_byYear.rds")
 
-BGs_crimeChange <- map(names(BGs_crimeCounts_byYear),
+BGs_crimeChange <- map(names(BGs_crimeCounts_byYear)[c(1:14, 16:34)],
                        function(city) {
                          print(city)
                          
@@ -45,7 +45,7 @@ BGs_crimeChange <- map(names(BGs_crimeCounts_byYear),
                          }
                        ) %>% 
   set_names(.,
-            names(BGs_crimeCounts_byYear))
+            names(BGs_crimeCounts_byYear)[c(1:14, 16:34)])
 
 
 ## 1a. Export as rds ----

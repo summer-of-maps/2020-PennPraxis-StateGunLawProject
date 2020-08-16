@@ -33,6 +33,9 @@ gunIncidentsByCityPlot <- ggplot(gunIncident_summary,
 #        x = "Year",
 #        y = "Gun crimes")
 
+gunCount_byYear_list <- readRDS(file = "~outputs/30/31_gunCount_byYear_list.rds")
+gunIncidentsByYear_plots <- readRDS("~outputs/30/31c_gunIncidentsByYear_plots.rds")
+
 gunIncidentsByYear_plots <- map(gunCount_byYear_list,
                                 ~ .x %>% 
                                   ggplot(aes(x = year,
@@ -44,6 +47,89 @@ gunIncidentsByYear_plots <- map(gunCount_byYear_list,
                                   labs(title = "Gun crimes by year",
                                        x = "Year",
                                        y = "Gun crimes"))
+
+
+gunIncidentsByYear_plots_deliverable <- vector("list", length(gunCount_byYear_list)) %>% 
+  set_names(names(gunCount_byYear_list))
+
+for (city in seq_len(length(gunCount_byYear_list))){
+
+  name <- names(gunCount_byYear_list)[city]
+  print(name)
+  
+  gunIncidentsByYear_plots_deliverable[[name]] <- 
+    ggplot(gunCount_byYear_list[[name]],
+           aes(x = year,
+           y = gun_count)) +
+    geom_line(size = 2,
+              color = "yellow") +
+    scale_y_continuous(limits = c(0, NA),
+                       label = comma) +
+    scale_x_continuous(limits = c(min(gunCount_byYear_list[[name]]$year), min(max(gunCount_byYear_list[[name]]$year), 2019)),
+                       breaks = seq(min(gunCount_byYear_list[[name]]$year), min(max(gunCount_byYear_list[[name]]$year), 2019), 2)) + 
+    # ylim(0, NA) +
+    plotTheme() +
+    labs(title = "Annual Gun Crimes") +
+    theme(plot.title = element_text(color = "white", face = "bold", size = 24),
+          axis.title = element_blank(),
+          axis.text = element_text(colour = "white", size = 18),
+          axis.ticks = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          plot.background = element_rect(fill = "transparent", colour = NA),
+          panel.background = element_rect(fill = "transparent", colour = NA),
+          rect = element_rect(fill = "transparent"))
+  
+  ggsave(plot = gunIncidentsByYear_plots_deliverable[[name]] ,
+         filename = paste0("~outputs/Plots/~Deliverable maps/35a_BG_crimeIncrease_maps/",
+                           name,
+                           "_lineGraph.pdf"), 
+         device = "pdf",
+         units = "in",
+         dpi = 300,
+         width = 8,
+         height = 4)
+  
+}
+
+
+gunIncidentsByYear_plots_deliverable$Auburn <-
+  ggplot(gunCount_byYear_list$Auburn,
+         aes(x = year,
+             y = gun_count)) +
+  geom_line(size = 2,
+            color = "yellow") +
+  scale_y_continuous(limits = c(0, NA),
+                     label = comma) +
+  scale_x_continuous(limits = c(min(gunCount_byYear_list$Auburn$year), 2019),
+                     labels = c(2018, 2019),
+                     breaks = c(2018, 2019)) + 
+  # ylim(0, NA) +
+  plotTheme() +
+  labs(title = "Annual Gun Crimes") +
+  theme(plot.title = element_text(color = "white", face = "bold", size = 24),
+        axis.title = element_blank(),
+        axis.text = element_text(colour = "white", size = 18),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        rect = element_rect(fill = "transparent"))
+
+ggsave(plot = gunIncidentsByYear_plots_deliverable$Auburn ,
+       filename = paste0("~outputs/Plots/~Deliverable maps/35a_BG_crimeIncrease_maps/",
+                         # name,
+                         "Auburn_lineGraph.pdf"), 
+       device = "pdf",
+       units = "in",
+       dpi = 300,
+       width = 8,
+       height = 4)
+
+
 
 ## 1a. Export as rds ----
 # saveRDS(gunIncidentsByCityPlot,

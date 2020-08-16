@@ -5,7 +5,8 @@
 #   b. Parks
 #
 # Exports: 
-# 1. 
+# 1. alcohol_buffer100ft_list as 37_alcohol_buffer100ft_list.rds
+# 2. parks_gunCount_list as 37_parks_gunCount_list.rds
 # 
 # To-do:
 # 1. 
@@ -16,11 +17,38 @@
 bbox_sfs <- readRDS("~outputs/10/14_bbox_sfs.rds")
 alcohol_outlets <- readRDS("~outputs/10/14_alcohol_outlets.rds")
 proj_list <- readRDS("~outputs/10/14_proj_list.rds")
+city_laws_list <- readRDS("~outputs/10/14_city_laws_list.rds")
+
 
 guns_proj_list <- vector("list", length(guns_list_shp)) %>% 
   set_names(names(guns_list_shp))
 alcohol_buffer100ft_list <- vector("list", length(guns_list_shp)) %>% 
   set_names(names(guns_list_shp))
+
+## All cities ----
+for (city in seq_len(length(alcohol_buffer100ft_list))) {
+  
+  name <- names(alcohol_buffer100ft_list)[city]
+  print(name)
+  
+  guns_proj_list[[name]] <- guns_list_shp[[name]] %>% 
+    st_transform(proj_list[[name]])
+  
+  tmp <- guns_proj_list[[name]]
+  
+  alcohol_buffer100ft_list[[name]] <- alcohol_outlets[[name]] %>% 
+    st_transform(proj_list[[name]]) %>% 
+    st_buffer(dist = 100) %>% # 100 ft
+    dplyr::select(osm_id, name, amenity, geometry) %>% 
+    mutate(gun_count = lengths(st_intersects(.,
+                                             tmp)
+                               )
+           )
+  
+}
+
+
+
 
 # Philadelphia ----
 guns_proj_list$Philadelphia <- guns_list_shp$Philadelphia %>% 
@@ -83,6 +111,77 @@ lou_alcohol_gunSum / lou_alcohol_count # So 1.8 gun crimes per outlet during tha
 parks <- readRDS("~outputs/10/14_parks.rds")
 parks_gunCount_list <- vector("list", length(guns_list_shp)) %>% 
   set_names(names(guns_list_shp))
+
+## All cities ----
+for (city in seq_len(length(parks_gunCount_list))) {
+  
+  name <- names(parks_gunCount_list)[city]
+  print(name)
+  
+  tmp <- guns_proj_list[[name]]
+  
+  parks_gunCount_list[[name]] <- parks[[name]] %>% 
+    st_transform(proj_list[[name]]) %>% 
+    dplyr::select(osm_id, name, leisure, geometry) %>% 
+    mutate(gun_count = lengths(st_intersects(.,
+                                             tmp)))
+  
+}
+
+alcohol_Parks_summary <- vector("list", length(guns_list_shp)) %>% 
+  set_names(names(guns_list_shp))
+
+for (city in seq_len(length(alcohol_Parks_summary))){
+  
+  name <- names(alcohol_Parks_summary)[city]
+  
+  gun_count <- guns_list_shp[[name]] %>% nrow()
+  alcohol_outlet_count <- alcohol_buffer100ft_list[[name]] %>% nrow()
+  alcohol_gunSum <- sum(alcohol_buffer100ft_list[[name]]$gun_count)
+  alcohol_gunPerc <- alcohol_gunSum / gun_count
+  crimes_per_alcoholOutlet <- alcohol_gunSum / alcohol_outlet_count
+  alcohol_allowed <- city_laws_list[[name]]$`Bars Allowed`
+  
+  
+  parks_allowed <- city_laws_list[[name]]$`Parks Allowed`
+  parks_gunSum <- sum(parks_gunCount_list[[name]]$gun_count)
+  parks_gunPerc <- parks_gunSum / gun_count
+  parks_mileage <- parks_gunCount_list[[name]] %>% 
+    st_union() %>%  
+    st_area() %>%
+    sum %>%
+    as.numeric() %>%  
+    conv_unit(from = "ft2", to = "mi2")
+  parks_gun_perSqMi <- parks_gunSum / parks_mileage
+  city_mileage <- city_bounds[[name]] %>% 
+    st_transform(proj_list[[name]]) %>% 
+    st_area() %>% 
+    as.numeric %>% # 
+    conv_unit(from = "ft2", to = "mi2")
+  
+  park_percentage <- parks_mileage / city_mileage
+  
+  
+  alcohol_Parks_summary[[name]] <- data.frame(
+    totalCrimes = gun_count,
+    alcohol_allowed = alcohol_allowed,
+    alcohol_outlet_count = alcohol_outlet_count,
+    alcohol_crime_count = alcohol_gunSum,
+    alcohol_crime_percentage = round(alcohol_gunPerc, 5),
+    crimes_per_alcohol = crimes_per_alcoholOutlet,
+    
+    parks_allowed = parks_allowed,
+    park_mileage = parks_mileage,
+    park_crime_count = parks_gunSum,
+    park_crime_percentage = parks_gunPerc,
+    park_crimes_perSqMi = parks_gun_perSqMi,
+    
+    stringsAsFactors = FALSE)
+  
+}
+
+
+
 
 # Philadelphia ----
 parks_gunCount_list$Philadelphia <- parks$Philadelphia %>% 
@@ -163,3 +262,10 @@ lou_gunSum / lou_totalArea # Overall, there are 441 gun crimes per square mile i
 
 ## 2. ----
 
+## 1a. Export as rds ----
+saveRDS(alcohol_buffer100ft_list,
+        "~outputs/30/37_alcohol_buffer100ft_list.rds")
+
+## 1b. Export as rds ----
+saveRDS(parks_gunCount_list,
+        "~outputs/30/37_parks_gunCount_list.rds")
