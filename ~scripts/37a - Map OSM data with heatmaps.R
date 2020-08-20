@@ -71,6 +71,14 @@ OSM_maps_list <- vector("list", length(guns_list_shp)) %>%
 city_laws_list <- readRDS("~outputs/10/14_city_laws_list.rds")
 
 
+
+city_laws_list %>% 
+  map_df(~ .x %>% 
+           dplyr::select(`Bars Allowed`,
+                         `Parks Allowed`)) %>%
+  .$`Parks Allowed` %>% 
+  sum(na.rm = T)
+
 # legend ----
 
 city <- 24

@@ -350,6 +350,7 @@ tracts_per100_I <- readRDS("~outputs/30/34_tracts_per100_I.rds")
 BGs_per100_I <- readRDS("~outputs/30/34_BGs_per100_I.rds")
 ```
 
+
 ```{r}
 # crime Moran's I tract
 I_crime_tr <- map_dfr(tracts_I$byPlace,
@@ -705,7 +706,7 @@ BGs_crimeChange_tmp <- map2(
               Black_pct_weighted = round(weighted.mean(Black_pct, TotPop, na.rm = TRUE), 2),
               TotPop = sum(TotPop, na.rm = TRUE),
               .groups = "drop") %>% 
-    arrange(desc(increase)))
+    arrange(desc(increase))) 
 
 
 ```
@@ -716,7 +717,7 @@ num_rows <- map(1:length(names(BGs_crimeChange_tmp)),
                 ~ nrow(BGs_crimeChange_tmp[[.x]])) %>% 
                   unlist()
 
-BGs_crimeChange_tmp %>%
+BGs_crimeChange_tmp %>% 
   bind_rows() %>% 
   # arrange(Species)  %>%  # same order as table results  
   # select(-Species)  %>%

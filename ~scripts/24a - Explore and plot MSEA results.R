@@ -136,7 +136,8 @@ ggplot(tmp,
            y = globalS)) +
   geom_point(color = "black") +
   geom_smooth(method = "loess") +
-  labs(title = "Mean Similarity, including all cells, even those with low expected frequency") +
+  # labs(title = "Mean Similarity, including all cells, even those with low expected frequency") +
+  labs(title = "Mean Similarity of all cells") +
   plotTheme() +
   xlim(0, 6000)
 
