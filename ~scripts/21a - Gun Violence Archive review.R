@@ -17,7 +17,6 @@ GVA_2 <- vroom(file.path(data_dir, "Gun Violence Archive Data/GVA_2020.csv"))
 
 ## 2. ----
 # Atlanta
-
 GVA_1 %>% 
   filter(city_or_county == "Atlanta",
          !is.na(address) | !is.na(latitude)) %>% 

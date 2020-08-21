@@ -25,6 +25,3 @@ siegelSum_list <- split(siegelSum,
 ## 1. Export as RDS ----
 # saveRDS(siegelSum,
 #         "~outputs/20/20_siegelSum.RDS")
-
-test <- siegel_raw %>% filter(year == 2019,
-                              str_detect(law, "pree"))

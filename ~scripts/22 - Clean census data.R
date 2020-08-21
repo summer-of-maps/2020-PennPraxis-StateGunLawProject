@@ -58,7 +58,7 @@ tracts_byCounty <- intersect_geo_lists(allStateTracts, counties_trim)
 # Select by Census "place". Manually add cities/counties where necessary
 # Then select tracts in those places/counties
 
-  places <- readRDS("~outputs/~large_files/12_places.rds")
+places <- readRDS("~outputs/~large_files/12_places.rds")
 places2 <- places
 # places2 <- map2(places,
 #                 cities_list,

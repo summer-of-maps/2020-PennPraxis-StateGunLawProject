@@ -195,9 +195,9 @@ for (city in seq_len(length(worldpop_crimeCounts_byYear))) {
 #         "~outputs/30/33_BGs_crimeCounts_byYear.rds")
 
 ## 3a. Export as rds ----
-saveRDS(worldpop_crimeCounts,
-        "~outputs/~large_files/33_worldpop_crimeCounts.rds")
+# saveRDS(worldpop_crimeCounts,
+#         "~outputs/~large_files/33_worldpop_crimeCounts.rds")
 
 ## 3b. Export as rds ----
-saveRDS(worldpop_crimeCounts_byYear,
-        "~outputs/~large_files/33_worldpop_crimeCounts_byYear.rds")
+# saveRDS(worldpop_crimeCounts_byYear,
+#         "~outputs/~large_files/33_worldpop_crimeCounts_byYear.rds")

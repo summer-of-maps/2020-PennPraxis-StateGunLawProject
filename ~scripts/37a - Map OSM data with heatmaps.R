@@ -11,11 +11,10 @@
 #
 ##########################################################################
 
-
 # https://crd150.github.io/lab6.html#point_intensity_heat_maps
 
 ## 1. ----
-city_bounds <- readRDS("~outputs/10/14_city_bounds.rds")
+city_bounds <- readRDS("~outputs/10/15_city_bounds.rds")
 proj_list <- readRDS("~outputs/10/14_proj_list.rds")
 
 heatmap_objs <- vector("list", length(guns_list_shp)) %>% 
@@ -359,24 +358,9 @@ for (city in seq_len(length(OSM_maps_list))[c(2)]) {
   
   }
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
 ## 1. Export as rds ----
-saveRDS(heatmap_objs,
-        "~outputs/30/37_heatmap_objs.rds")
+# saveRDS(heatmap_objs,
+#         "~outputs/30/37_heatmap_objs.rds")
 
 ## 2. Export as pdf ----
 for (city in seq_len(length(OSM_maps_list))[c(24)]) {

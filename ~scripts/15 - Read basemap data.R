@@ -6,12 +6,15 @@
 #
 # Exports: 
 # 1. context_bbox_list as 15_context_bbox_list.rds
+# 2. context_mask_list as 15_context_mask_list.rds
+# 3. hydrology_list as 15_hydrology_list.rds
+# 4. roads_list as 15_roads_list.rds
+# 5. land_list as 15_land_list.rds
 # 
 # To-do:
 # 1. 
 #
 ##########################################################################
-
 
 ## 1. ----
 city_bounds <- readRDS("~outputs/10/15_city_bounds.rds")

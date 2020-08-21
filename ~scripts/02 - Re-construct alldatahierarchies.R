@@ -10,7 +10,7 @@
 # 2. alldatahierarchies_Azavea.csv
 #
 # To-do:
-# 1. add `size` column data
+# 1. 
 # 
 ##########################################################################
 

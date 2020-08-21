@@ -22,8 +22,6 @@
 # 1. 
 ##########################################################################
 
-# Source: https://crd150.github.io/lab5.html
-
 ## 1a. ----
 # tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
 tracts_I <- map(tracts_crimeCounts,
@@ -158,17 +156,6 @@ BGs_per100_localI_byYear <- future_map2(BGs_crimeCounts_byYear[c(1:14, 16:34)],
                                                            cluster = factor(cluster,
                                                                             levels = c("insignificant", "high-high", "high-low", "low-high", "low-low"))) %>% 
                                                     st_sf()))
-
-
-
-
-
-
-
-
-
-
-
 
 ## 4. ----
 BGs_per100_localI <- readRDS("~outputs/30/34_BGs_per100_localI.rds")

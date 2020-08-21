@@ -12,6 +12,7 @@
 # 2. worldpop_byCity_raster as 23_worldpop_byCity_raster.rds
 # 3. worldpop_grids as 23_worldpop_grids.rds
 # 4. worldpop_data as 23_worldpop_data.rds
+# 5. BG_pops_byYear as 23_BG_pops_byYear.rds
 #
 # To-do:
 # 1. 
@@ -29,18 +30,6 @@ years_byCity <- map(guns_list_shp,
 
 # for every year for which we have crime data for every city
 # crop and mask the relevant worldpop USA raster file
-plan(multiprocess)
-
-# worldpop_byCity <- future_map2(BG_selection_list$byPlace,
-#              years_byCity,
-#              function(BGs, cityTimes)
-#                map(cityTimes,
-#                    function(year) 
-#                      crop(worldpop_list[[as.character(year)]],
-#                           BGs) %>% 
-#                      mask(BGs)),
-#              .progress = TRUE)
-
 worldpop_byCity_raster <- vector("list", length(BG_selection_list$byPlace)) %>%
   set_names(names(BG_selection_list$byPlace))
 
@@ -139,8 +128,8 @@ for (city in seq_len(length(BG_pops_byYear))) {
 ## 1. Export as rds ----
 # saveRDS(years_byCity,
 #         "~outputs/20/23_years_byCity.rds")
-saveRDS(worldpop_byCity_raster,
-        "~outputs/~large_files/23_worldpop_byCity_raster.rds")
+# saveRDS(worldpop_byCity_raster,
+#         "~outputs/~large_files/23_worldpop_byCity_raster.rds")
 
 ## 2. Export as rds ----
 # saveRDS(worldpop_grids,

@@ -13,47 +13,6 @@
 ##########################################################################
 
 ## 1a. ----
-
-# test with Baltimore
-changes_tmp <- BGs_crimeChange$Baltimore
-geo_tmp <- BG_selection_list$byPlace$Baltimore
-basemap_tmp <- basemap_list$Baltimore
-years_tmp <- years_byCity$Baltimore
-
-Balt_tmp <- geo_tmp %>% 
-  dplyr::select(GEOID, geometry, pop = estimate) %>% 
-  left_join(changes_tmp,
-            by = "GEOID") %>% 
-  mutate(CrimeIncrease = ifelse(pop == 0,
-                                NA,
-                                CrimeIncrease),
-         CrimeMap = case_when(CrimeIncrease %in% c("Yes (significant)", "Yes (not significant)") ~ CrimeIncrease,
-                              CrimeIncrease %in% c("No (not significant)", "No (significant)") ~ "No",
-                              TRUE ~ NA_character_))
-
-ggplot() +
-  geom_sf(data = Balt_tmp,
-          aes(fill = factor(CrimeMap),
-              color = factor(CrimeMap)),
-          # color = NA,
-          alpha = 0.5,
-          size = 1.25,
-          inherit.aes = FALSE) +
-  scale_fill_manual(name = "Did Crime Increase?",
-                    na.value = "blue",
-                    values = c("#ca0020", "#ca0020", "lightgray"),
-                    limits = c("Yes (significant)", "Yes (not significant)", "No"),
-                    labels = c("Increase (p<0.1)", "Increase (p>0.1)", "Decrease")) +
-  scale_color_manual(name = "Did Crime Increase?",
-                     values = c("black", NA, NA),
-                     limits = c("Yes (significant)", "Yes (not significant)", "No"),
-                     labels = c("Increase (p<0.1)", "Increase (p>0.1)", "Decrease")) +
-  mapTheme() +
-  labs(title = "Change in Gun Crimes by Census Block Group",
-       subtitle = paste("Study period:", min(years_tmp),
-                        "-", max(years_tmp)))
-
-
 BG_change_maps <- vector("list", length(BGs_crimeChange)) %>% 
   set_names(names(BGs_crimeChange))
 
@@ -109,7 +68,6 @@ hydrology_list <- readRDS("~outputs/10/15_hydrology_list.rds")
 roads_list <- readRDS("~outputs/10/15_roads_list.rds")
 years_byCity <- readRDS("~outputs/20/23_years_byCity.rds")
 BGs_crimeChange <- readRDS("~outputs/30/35_BGs_crimeChange.rds")
-
 
 # legend
 city <- 6
@@ -269,9 +227,6 @@ for (city in seq_len(length(BG_change_maps_deliverables))) {
          height = 11)
   
 }
-
-
-
 
 ## 1a. Export as png ----
 # saveRDS(BG_change_maps,

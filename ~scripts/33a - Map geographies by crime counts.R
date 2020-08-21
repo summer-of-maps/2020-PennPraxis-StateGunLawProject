@@ -22,9 +22,6 @@
 # 1. 
 ##########################################################################
 
-# import basemaps
-# basemap_list <- readRDS("~outputs/30/31a_basemap_list.rds")
-
 ## 1a. ----
 # tracts_crimeCounts <- readRDS("~outputs/30/33_tracts_crimeCounts.rds")
 tract_crime_maps <- map(tracts_crimeCounts,

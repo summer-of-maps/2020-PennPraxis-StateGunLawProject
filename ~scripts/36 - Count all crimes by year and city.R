@@ -77,11 +77,11 @@ gunPercentage_byYear_plots <- map(gunPercentage_byYear,
                                        y = "% Gun Crimes"))
 
 ## 1. Export as rds ----
-saveRDS(allCrimes_countByCity,
-        "~outputs/30/36_allCrimes_countByCity.rds")
+# saveRDS(allCrimes_countByCity,
+#         "~outputs/30/36_allCrimes_countByCity.rds")
 
 ## 2. Export as rds ----
-saveRDS(gunPercentage_byYear,
-        "~outputs/30/36_gunPercentage_byYear.rds")
-saveRDS(gunPercentage_byYear_plots,
-        "~outputs/30/36_gunPercentage_byYear_plots.rds")
+# saveRDS(gunPercentage_byYear,
+#         "~outputs/30/36_gunPercentage_byYear.rds")
+# saveRDS(gunPercentage_byYear_plots,
+#         "~outputs/30/36_gunPercentage_byYear_plots.rds")

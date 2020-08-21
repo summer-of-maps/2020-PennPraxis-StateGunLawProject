@@ -13,7 +13,6 @@
 
 ## 1a. ----
 
-# test with Philly
 # BGs_crimeCounts_byYear <- readRDS("~outputs/30/33_BGs_crimeCounts_byYear.rds")
 
 BGs_crimeChange <- map(names(BGs_crimeCounts_byYear)[c(1:14, 16:34)],

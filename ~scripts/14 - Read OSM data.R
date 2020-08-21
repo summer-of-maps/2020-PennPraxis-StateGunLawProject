@@ -11,6 +11,10 @@
 # Exports: 
 # 1. city_bounds as 14_city_bounds.rds
 # 2. proj_list as 14_proj_list.rds
+# 3. bbox_mats as 14_bbox_mats.rds
+# 4. alcohol_outlets as 14_alcohol_outlets.rds
+# 5. parks as 14_parks.rds
+# 6. city_laws_list as 14_city_laws_list.rds
 # 
 # To-do:
 # 1. 
@@ -490,25 +494,25 @@ city_laws_list <- city_laws %>%
   split(city_laws$City)
 
 ## 1. Export as rds ----
-saveRDS(city_bounds,
-        "~outputs/10/14_city_bounds.rds")
+# saveRDS(city_bounds,
+#         "~outputs/10/14_city_bounds.rds")
 
 ## 2. Export as rds ----
-saveRDS(proj_list,
-        "~outputs/10/14_proj_list.rds")
+# saveRDS(proj_list,
+#         "~outputs/10/14_proj_list.rds")
 
 ## 3. Export as rds ----
-saveRDS(bbox_mats,
-        "~outputs/10/14_bbox_mats.rds")
+# saveRDS(bbox_mats,
+#         "~outputs/10/14_bbox_mats.rds")
 
 ## 4a. Export as rds ----
-saveRDS(alcohol_outlets,
-        "~outputs/10/14_alcohol_outlets.rds")
+# saveRDS(alcohol_outlets,
+#         "~outputs/10/14_alcohol_outlets.rds")
 
 ## 4b. Export as rds ----
-saveRDS(parks,
-        "~outputs/10/14_parks.rds")
+# saveRDS(parks,
+#         "~outputs/10/14_parks.rds")
 
 ## 5. Export as rds ----
-saveRDS(city_laws_list,
-        "~outputs/10/14_city_laws_list.rds")
+# saveRDS(city_laws_list,
+#         "~outputs/10/14_city_laws_list.rds")

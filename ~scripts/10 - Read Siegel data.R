@@ -3,6 +3,7 @@
 # 1. Reads in the raw Siegel data
 ##########################################################################
 
+## 1. ----
 siegel_raw <- read_csv(file.path(data_dir, "Azavea_Siegel_Data.csv")) %>% 
   dplyr::select(-1) %>% 
   mutate(law = as.factor(law),

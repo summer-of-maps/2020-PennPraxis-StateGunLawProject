@@ -1,6 +1,6 @@
 ##########################################################################
 # This script:
-# 1. Reads in census geographies for San Francisco
+# 1. [reserved]
 # 2. Reads in census tracts for all states
 # 3. Reads in census block groups for all states
 # 4. Reads in demographic and socio-economic data for block gorups
@@ -14,13 +14,6 @@
 ##########################################################################
 
 ## 1. ----
-# sf_tracts_2018 <- get_acs(geography = "tract",
-#                           variables = "B01003_001E", # population
-#                           year = 2018,
-#                           state = "California",
-#                           county = "San Francisco",
-#                           survey = "acs5",
-#                           geometry = TRUE)
 
 ## 2. ----
 # states and cities
@@ -66,9 +59,9 @@ allStateTracts <- map(states_list,
 ### USE CITY_BOUNDS FROM SCRIPT 14 INSTEAD
 places <-  readRDS("~outputs/10/14_city_bounds.rds")
 
-saveRDS(places,
-        file = "~outputs/~large_files/12_places.rds",
-        compress = TRUE)
+# saveRDS(places,
+#         file = "~outputs/~large_files/12_places.rds",
+#         compress = TRUE)
 
 ## 3. ----
 allStateBGs <- readRDS("~outputs/10/12_allStateBGs.rds")

@@ -16,7 +16,6 @@
 ##########################################################################
 
 ## 1. ----
-
 # Data reading and wrangling
 library(tidyverse)
 library(vroom) # read large csvs
@@ -51,10 +50,8 @@ library(ggmap) # basemaps and geocoding
 library(gridExtra)
 library(knitr)
 library(kableExtra)
-# library(wesanderson) # palettes
 library(cowplot) # for arranging plots
 library(magick) # make GIFs
-# devtools::install_github("mtennekes/oldtmaptools")
 library(oldtmaptools) # for heatmaps
 library(ggnewscale) # multiple ggplot color/fill scales
 

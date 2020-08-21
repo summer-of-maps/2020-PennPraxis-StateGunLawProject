@@ -47,9 +47,6 @@ for (city in seq_len(length(alcohol_buffer100ft_list))) {
   
 }
 
-
-
-
 # Philadelphia ----
 guns_proj_list$Philadelphia <- guns_list_shp$Philadelphia %>% 
   st_transform(proj_list$Philadelphia)
@@ -181,8 +178,6 @@ for (city in seq_len(length(alcohol_Parks_summary))){
 }
 
 
-
-
 # Philadelphia ----
 parks_gunCount_list$Philadelphia <- parks$Philadelphia %>% 
   dplyr::select(osm_id, name, leisure, geometry) %>% 
@@ -263,9 +258,9 @@ lou_gunSum / lou_totalArea # Overall, there are 441 gun crimes per square mile i
 ## 2. ----
 
 ## 1a. Export as rds ----
-saveRDS(alcohol_buffer100ft_list,
-        "~outputs/30/37_alcohol_buffer100ft_list.rds")
+# saveRDS(alcohol_buffer100ft_list,
+#         "~outputs/30/37_alcohol_buffer100ft_list.rds")
 
 ## 1b. Export as rds ----
-saveRDS(parks_gunCount_list,
-        "~outputs/30/37_parks_gunCount_list.rds")
+# saveRDS(parks_gunCount_list,
+#         "~outputs/30/37_parks_gunCount_list.rds")

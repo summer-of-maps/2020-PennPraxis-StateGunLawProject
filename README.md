@@ -1,13 +1,19 @@
-# SGLP
-PennPraxis State Gun Law Project for Azavea Summer of Maps Fellowship 2020
+# Azavea Summer of Maps
+This is the repository for the [PennPraxis](https://www.design.upenn.edu/pennpraxis/home) / [State Gun Law Project](https://stategunlawproject.org/) for the 2020 edition of the [Azavea Summer of Maps Fellowship](https://www.summerofmaps.com/.
 
-# Organization
+* **Fellow:** [Eugene Chong](https://e-chong.github.io/)
+* [Final presentation recording](https://drive.google.com/open?id=19BTBXISt9iR6OxC6LDHMqVG-RAwh1W1K)
+* [Project description](https://www.summerofmaps.com/projects/shortlist/2020-pennpraxis)
+
+# File Structure
 
 ## Data
 
 All SGLP-provided raw data are saved in the Dropbox.
 
 ## Code
+
+All scripts can be run in the order that they are numbered.
 
 Note that Census and Google API Keys (for geocoding Virginia Beach only) are loaded from local files in `00 - Admin.R`. Readers running the code here will need to supply their own keys.
 
@@ -16,6 +22,8 @@ Note that Census and Google API Keys (for geocoding Virginia Beach only) are loa
 **00 - Working markdown.rmd:** Use for writing and testing code
 
 ### Scripts
+
+
 
 **00 - Admin.R:** Load packages and define filepath for Dropbox data. Run this whenever starting an analysis task.
 
@@ -27,10 +35,14 @@ Note that Census and Google API Keys (for geocoding Virginia Beach only) are loa
 
 **2\_.R:** Clean data for analysis
 
-**3\_.R:** Exploratory plots and analysis
+**3\_.R:** Plots and analysis
 
-### Outputs (incl. intermediate objects
+### Outputs
+
+#### Intermediate objects
+
+All intermediate objects are saved as `.rds` and are saved using the following format.
 
 **Format:** `/~outputs/[scriptRange]/[script#]_[objectName].rds`
 
-**Example:** `/~outputs/10/11_gun_crimes_df.rds` is object `gun_crimes_df` produced in script 11.
+**Example:** `/~outputs/10/11_gun_crimes_df.rds` is object `gun_crimes_df` produced in script `11 - Read crime data.R`.
