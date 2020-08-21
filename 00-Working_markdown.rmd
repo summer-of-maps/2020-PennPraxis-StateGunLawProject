@@ -4,6 +4,7 @@ author: "Eugene Chong"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
   html_document:
+    code_folding: hide
     toc: true
     toc_float: 
       collapsed: false
@@ -39,43 +40,6 @@ BG_selection_list <- readRDS("~outputs/20/22_BG_selection_list.rds")
 tract_selection_list <- readRDS("~outputs/20/22_tract_selection_list.rds")
 ```
 
-# Read Data
-
-## Siegel data for all cities
-
-```{r}
-# source("~scripts/10 - Read Siegel Data.R")
-```
-
-## Gun incidents for all cities
-
-```{r, eval = eval_state}
-# source("~scripts/11 - Read crime data.R")
-# guns_df <- readRDS("~outputs/10/11_guns_df.rds")
-```
-
-```{r}
-# source("~scripts/21 - Clean crime data.R")
-# guns_clean <- readRDS("~outputs/20/21_guns_clean.rds")
-# guns_list <- readRDS("~outputs/20/21_guns_list.rds")
-```
-
-Sample of data for testing
-
-```{r, eval = eval_state}
-set.seed(1)
-guns_sample_df <- sample_n(guns_df, 10000) 
-guns_sample_ls <- guns_sample_df %>% 
-  split(., # split into nested list of dfs by city
-        f = .$city)
-```
-
-## Census data for all cities
-
-```{r, results = "hide"}
-# source("~scripts/12 - Read census data.R")
-```
-
 # Explore Data
 
 ## Siegel
@@ -105,11 +69,6 @@ unique(siegel_raw$Sub.Category)
 ```
 
 ### Scores over time 
-
-```{r}
-# source("~scripts/20 - Clean Siegel data.R")
-# siegelSum <- readRDS("~outputs/20/20_siegelSum.RDS")
-```
 
 ```{r, fig.height = 20, fig.width = 13}
 ggplot(siegelSum,
@@ -169,77 +128,7 @@ range(guns_clean$clean_occur_date, na.rm = TRUE)
 range(guns_clean$clean_report_date, na.rm = TRUE)
 ```
 
-Benchmarking results show `furrr` is fastest for manipulating the data.
-```{r, eval = eval_state}
-benchmark_results <- benchmark("flat" = {
-  flat <- guns_sample_df %>% 
-  mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
-         # correct some incorrectly parsed observations
-         clean_occur_date = case_when(occurdate == "1" ~ as.Date(NA),
-                                      is.na(clean_occur_date) & 
-                                        str_detect(occurdate,
-                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
-                                        as.Date(occurdate, "%m/%d/%y"),
-                                      TRUE ~ clean_occur_date),
-         clean_report_date = anydate(reportdate),
-         clean_report_date = case_when(is.na(clean_report_date) & 
-                                        str_detect(reportdate,
-                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
-                                        as.Date(reportdate, "%m/%d/%y"),
-                                      TRUE ~ clean_report_date))}, # benchmarking shows the furrr approach is fastest (but still not very fast)
-
-"purrr" = {map(guns_sample_ls,
-                        ~ .x %>% 
-                          mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
-         # correct some incorrectly parsed observations
-         clean_occur_date = case_when(occurdate == "1" ~ as.Date(NA),
-                                      is.na(clean_occur_date) & 
-                                        str_detect(occurdate,
-                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
-                                        as.Date(occurdate, "%m/%d/%y"),
-                                      TRUE ~ clean_occur_date),
-         clean_report_date = anydate(reportdate),
-         clean_report_date = case_when(is.na(clean_report_date) & 
-                                        str_detect(reportdate,
-                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
-                                        as.Date(reportdate, "%m/%d/%y"),
-                                      TRUE ~ clean_report_date)))},
-
-# plan(multiprocess)
-"furrr" = {future_map(guns_sample_ls,
-                        ~ .x %>% 
-                          mutate(clean_occur_date = anydate(occurdate), # use built-in formats from anytime package
-         # correct some incorrectly parsed observations
-         clean_occur_date = case_when(occurdate == "1" ~ as.Date(NA),
-                                      is.na(clean_occur_date) & 
-                                        str_detect(occurdate,
-                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
-                                        as.Date(occurdate, "%m/%d/%y"),
-                                      TRUE ~ clean_occur_date),
-         clean_report_date = anydate(reportdate),
-         clean_report_date = case_when(is.na(clean_report_date) & 
-                                        str_detect(reportdate,
-                                                   ".*\\d+/\\d+/\\d+.*") ~ # e.g "12/3/15", "12/3/15 1600" 
-                                        as.Date(reportdate, "%m/%d/%y"),
-                                      TRUE ~ clean_report_date)))},
-  replications = 1
-)
-```
-
 ### Plots
-
-Data:
-
-```{r}
-# source("~scripts/21 - Clean crime data.R")
-# guns_list_shp <- readRDS("~outputs/20/21_guns_list_shp.rds")
-```
-
-Source script: 
-
-```{r}
-# source("~scripts/31 - Explore crime data.R")
-```
 
 Crime counts by city
 
@@ -250,7 +139,7 @@ gunIncident_summary %>%
   kable_styling()
 ```
 
-```{r, fig.height=6}
+```{r, fig.height=12, fig.width = 12}
 gunIncidentsByCityPlot <- readRDS("~outputs/30/31c_gunIncidentsByCityPlot.rds")
 gunIncidentsByCityPlot
 ```
@@ -276,8 +165,6 @@ na_coords_summary %>%
 #### All Cities
 
 ##### Maps of each city  {.tabset}
-
-CHANGE THIS TO QUADRAT ANALYSIS MAPS
 
 ```{r, results='asis', echo = FALSE}
 # source("~scripts/31a - Map all crimes.R") 
@@ -322,21 +209,21 @@ A concave or convex hull may better fit the data, though.
 # BGs_crimeCounts <- readRDS("~outputs/30/33_BGs_crimeCounts.rds")
 ```
 
-```{r, cache = FALSE, eval = FALSE}
+```{r, cache = FALSE, eval = TRUE}
 tmap::tmap_mode("view")
 
 tmap::qtm(tracts_crimeCounts$byCaveHull$`San Francisco`, title = "Concave hull of crimes")
 ```
 
-```{r, cache = FALSE, eval = FALSE}
+```{r, cache = FALSE, eval = TRUE}
 tmap::qtm(tracts_crimeCounts$byVexHull$`San Francisco`, title = "Convex hull of crimes")
 ```
 
-```{r, cache = FALSE, eval = FALSE}
+```{r, cache = FALSE, eval = TRUE}
 tmap::qtm(tracts_crimeCounts$byCounty$`San Francisco`, title = "County")
 ```
 
-```{r, cache = FALSE, eval = FALSE}
+```{r, cache = FALSE, eval = TRUE}
 tmap::qtm(tracts_crimeCounts$byPlace$`San Francisco`, title = "Census-designated place")
 ```
 
@@ -460,11 +347,6 @@ I_wide <- I_tmp %>%
 ```
 
 Below is a table showing Moran's I for crimes per 100 for census tracts and block groups for each study area _selected by the relevant Census-designated place_, raw crime counts, and population. We see a big range from 0 (essentially random gun crime distribution relative to population) to very high 
-
-Questions: 
-
-* Weighting by population is important. Is Moran's I of crimes per 100 the best way?
-* How might we interpret a city that has a large difference in Moran's I between tracts and block groups (e.g. Kansas City)?
 
 ```{r}
 I_wide %>%  
@@ -738,26 +620,3 @@ BGs_crimeChange_tmp %>%
 
 
 ```
-
-
-# Spatial Scale Analysis and Selection
-
-**FILL IN LATER**
-
-To this point, we've aggregated gun crimes to the census tracts and block group level, because they are readily available for each city and are associated with demographic/socio-economic data that will provide useful context for analyzing gun violence rates. However, they have the disadvantage of 1) varying considerably in size and 2) not really reflecting the underlying spatial phenomenon. Maybe gun crimes sort into block-group-sized areas, but it'd be advantageous to measure it at many different levels, ranging from the individual block or street up to entire neighborhoods or larger. Ideally, we'd choose a spatial unit of aggregation that was small enough to reflect the distribution of the underlying gun crime data while being large enough to fit with other existing datasets without requiring too much areal interpolation. Additionally, we would expect that the size of the spatial unit would vary across cities, which vary in both the distribution and reporting quality of their crime data.
-
-One method proposed for selecting the "most appropriate" spatial scale comes from this paper: [Identifying the appropriate spatial resolution for the analysis of crime patterns, 2019](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0218324).
-
-The authors define the most appropriate scale as follows:
-
-> For these reasons, choosing the most appropriate spatial unit is very important. As [Oberwittler D, Wikström POH] (p 39) put it: “smaller is generally better”, but spatial units that are too small are problematic also. So what is an ‘appropriate’ spatial scale? Here, we define the most appropriate scale as that which is as large as possible without causing the underlying spatial units to become heterogeneous with respect to the phenomena under study. The appropriate scale, therefore, balances the theoretical and methodological benefits of working with small units against the difficulty in obtaining small-scale data and the small number problems that can emerge. Here the focus is on crime patterns, specifically, but the proposed method has applicability to other spatial phenomena.
-
-They then propose a method for determining the appropriate scale. First, they select two sets of point data driven by the same spatial process (in their case, two consecutive years of data for certain types of crimes in Vancouver). Then, they iteratively overlay sets of grid cells on their study area with progressively smaller sizes. With each iteration, they count the number of crimes from the two data sets that occurred in the grid cells and compare the similarity of spatial distribution/clustering between them using a measure called [Andresen's S](https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0218324.s002&type=supplementary). Finally, they plot the number of cells on the x-axis and _S_ on the y-axis. They suggest choosing the number of grid cells with the highest S, and, in the case _S_ plateaus rather than showing a single peak, choosing the number of grid cells at the elbow (much like when choosing a _K_ for _K-means_ cluster analysis). 
-
-`r include_graphics("https://journals.plos.org/plosone/article/figure/image?size=large&id=10.1371/journal.pone.0218324.g008")`
-
-
-
-
-
-

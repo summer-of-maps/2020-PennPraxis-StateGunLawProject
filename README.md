@@ -1,5 +1,5 @@
 # Azavea Summer of Maps
-This is the repository for the [PennPraxis](https://www.design.upenn.edu/pennpraxis/home) / [State Gun Law Project](https://stategunlawproject.org/) for the 2020 edition of the [Azavea Summer of Maps Fellowship](https://www.summerofmaps.com/.
+This is the repository for the [State Gun Law Project](https://stategunlawproject.org/) / [PennPraxis](https://www.design.upenn.edu/pennpraxis/home) project for the 2020 edition of the [Azavea Summer of Maps Fellowship](https://www.summerofmaps.com/).
 
 * **Fellow:** [Eugene Chong](https://e-chong.github.io/)
 * [Final presentation recording](https://drive.google.com/open?id=19BTBXISt9iR6OxC6LDHMqVG-RAwh1W1K)
@@ -19,11 +19,9 @@ Note that Census and Google API Keys (for geocoding Virginia Beach only) are loa
 
 ### Markdowns
 
-**00 - Working markdown.rmd:** Use for writing and testing code
+**00 - Working markdown.rmd:** Draft visuals and observations from data exploration.
 
 ### Scripts
-
-
 
 **00 - Admin.R:** Load packages and define filepath for Dropbox data. Run this whenever starting an analysis task.
 
@@ -38,6 +36,9 @@ Note that Census and Google API Keys (for geocoding Virginia Beach only) are loa
 **3\_.R:** Plots and analysis
 
 ### Outputs
+
+#### Plots
+All plots, including the exported PDFs used for the final deliverable maps, are exported to this folder.
 
 #### Intermediate objects
 

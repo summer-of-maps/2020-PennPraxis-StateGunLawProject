@@ -46,4 +46,5 @@ vignettes/*.pdf
 /~outputs/~large_files/
 
 # scratch files
-*/~scratch/
+/*/~scratch/
+~scratch/
